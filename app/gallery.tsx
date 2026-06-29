@@ -19,22 +19,36 @@ export default function GalleryScreen(): ReactElement {
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Gallery</Text>
-      <Text style={styles.body}>A photo-first view of every place saved locally on this device.</Text>
+      <Text style={styles.body}>
+        A photo-first view of every place saved locally on this device.
+      </Text>
 
       <FlatList
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         data={places}
         keyExtractor={(item: PlaceRecord): string => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>No photos saved yet. Capture a place to build your gallery.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>
+            No photos saved yet. Capture a place to build your gallery.
+          </Text>
+        }
         numColumns={2}
         renderItem={({ item }: { item: PlaceRecord }): ReactElement => (
           <Link asChild href={`/place/${item.id}`}>
             <Pressable style={styles.tile}>
-              <ImageBackground imageStyle={styles.tileImage} source={{ uri: item.photoUri }} style={styles.tileImageBackground}>
+              <ImageBackground
+                imageStyle={styles.tileImage}
+                source={{ uri: item.photoUri }}
+                style={styles.tileImageBackground}
+              >
                 <View style={styles.tileOverlay}>
-                  <Text numberOfLines={1} style={styles.tileTitle}>{item.title}</Text>
-                  <Text numberOfLines={1} style={styles.tileMeta}>{getCategoryLabel(item.categoryId)}</Text>
+                  <Text numberOfLines={1} style={styles.tileTitle}>
+                    {item.title}
+                  </Text>
+                  <Text numberOfLines={1} style={styles.tileMeta}>
+                    {getCategoryLabel(item.categoryId)}
+                  </Text>
                 </View>
               </ImageBackground>
             </Pressable>

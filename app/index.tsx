@@ -57,20 +57,33 @@ export default function HomeScreen(): ReactElement {
       <View style={styles.filterBar}>
         <Pressable
           onPress={(): void => setPlaceFilter('all')}
-          style={[styles.filterButton, placeFilter === 'all' ? styles.filterButtonActive : styles.filterButtonIdle]}
+          style={[
+            styles.filterButton,
+            placeFilter === 'all' ? styles.filterButtonActive : styles.filterButtonIdle,
+          ]}
         >
-          <Text style={[styles.filterButtonText, placeFilter === 'all' ? styles.filterButtonTextActive : styles.filterButtonTextIdle]}>
+          <Text
+            style={[
+              styles.filterButtonText,
+              placeFilter === 'all' ? styles.filterButtonTextActive : styles.filterButtonTextIdle,
+            ]}
+          >
             All
           </Text>
         </Pressable>
         <Pressable
           onPress={(): void => setPlaceFilter('favorites')}
-          style={[styles.filterButton, placeFilter === 'favorites' ? styles.filterButtonActive : styles.filterButtonIdle]}
+          style={[
+            styles.filterButton,
+            placeFilter === 'favorites' ? styles.filterButtonActive : styles.filterButtonIdle,
+          ]}
         >
           <Text
             style={[
               styles.filterButtonText,
-              placeFilter === 'favorites' ? styles.filterButtonTextActive : styles.filterButtonTextIdle,
+              placeFilter === 'favorites'
+                ? styles.filterButtonTextActive
+                : styles.filterButtonTextIdle,
             ]}
           >
             Favorites
@@ -93,7 +106,9 @@ export default function HomeScreen(): ReactElement {
                 </View>
                 <View>
                   <Text style={styles.cardTitle}>{item.title}</Text>
-                  <Text style={styles.cardMeta}>{new Date(item.capturedAt).toLocaleDateString()}</Text>
+                  <Text style={styles.cardMeta}>
+                    {new Date(item.capturedAt).toLocaleDateString()}
+                  </Text>
                 </View>
               </View>
             </Pressable>
@@ -107,7 +122,8 @@ export default function HomeScreen(): ReactElement {
   );
 }
 
-const filterFavoritePlaces = (places: PlaceRecord[]): PlaceRecord[] => places.filter((place: PlaceRecord): boolean => place.isFavorite);
+const filterFavoritePlaces = (places: PlaceRecord[]): PlaceRecord[] =>
+  places.filter((place: PlaceRecord): boolean => place.isFavorite);
 
 const PrivacyFooter = (): ReactElement => (
   <Link asChild href="/settings">

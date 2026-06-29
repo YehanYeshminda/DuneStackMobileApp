@@ -1,7 +1,17 @@
 import { CameraCapturedPicture, CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import { ReactElement, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { categories, Category } from '../src/categories/categories';
 import { saveCapturedImage } from '../src/files/localImages';
@@ -80,12 +90,18 @@ export default function CaptureScreen(): ReactElement {
     }
 
     if (!isCameraReady) {
-      Alert.alert('Camera is still loading', 'Wait until the camera preview is ready, then take the photo.');
+      Alert.alert(
+        'Camera is still loading',
+        'Wait until the camera preview is ready, then take the photo.',
+      );
       return;
     }
 
     if (cameraRef.current === null) {
-      Alert.alert('Camera unavailable', 'The camera preview is not available. Reopen this screen and try again.');
+      Alert.alert(
+        'Camera unavailable',
+        'The camera preview is not available. Reopen this screen and try again.',
+      );
       return;
     }
 
@@ -111,7 +127,10 @@ export default function CaptureScreen(): ReactElement {
         return;
       }
 
-      const message = error instanceof Error ? error.message : 'An unknown error occurred while taking the photo.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while taking the photo.';
       Alert.alert('Could not take photo', message);
     } finally {
       isTakingPhotoRef.current = false;
@@ -131,13 +150,18 @@ export default function CaptureScreen(): ReactElement {
     if (capturedLocation === null) {
       Alert.alert(
         'Location not ready',
-        isLocating ? 'Still getting your location. Try again in a moment.' : 'Tap "Retry location" to add a geotag before saving.',
+        isLocating
+          ? 'Still getting your location. Try again in a moment.'
+          : 'Tap "Retry location" to add a geotag before saving.',
       );
       return;
     }
 
     if (capturedAt === null) {
-      Alert.alert('Capture time required', 'Retake the photo so the app can save the capture time with it.');
+      Alert.alert(
+        'Capture time required',
+        'Retake the photo so the app can save the capture time with it.',
+      );
       return;
     }
 
@@ -167,7 +191,10 @@ export default function CaptureScreen(): ReactElement {
 
       router.replace(`/place/${savedPlace.id}`);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred while saving the place.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while saving the place.';
       Alert.alert('Could not save place', message);
     } finally {
       setIsSaving(false);
@@ -197,9 +224,16 @@ export default function CaptureScreen(): ReactElement {
           <Pressable
             disabled={isTakingPhoto || !isCameraReady}
             onPress={takePhoto}
-            style={[styles.captureButton, isTakingPhoto || !isCameraReady ? styles.captureButtonDisabled : styles.captureButtonReady]}
+            style={[
+              styles.captureButton,
+              isTakingPhoto || !isCameraReady
+                ? styles.captureButtonDisabled
+                : styles.captureButtonReady,
+            ]}
           >
-            <Text style={styles.captureButtonText}>{isTakingPhoto ? 'Taking Photo...' : 'Take Photo'}</Text>
+            <Text style={styles.captureButtonText}>
+              {isTakingPhoto ? 'Taking Photo...' : 'Take Photo'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -220,7 +254,12 @@ export default function CaptureScreen(): ReactElement {
       />
 
       <Text style={styles.label}>Title</Text>
-      <TextInput onChangeText={setTitle} placeholder="e.g. Sunset coffee stop" style={styles.input} value={title} />
+      <TextInput
+        onChangeText={setTitle}
+        placeholder="e.g. Sunset coffee stop"
+        style={styles.input}
+        value={title}
+      />
 
       <Text style={styles.label}>Category</Text>
       <View style={styles.categoryGrid}>
@@ -228,9 +267,18 @@ export default function CaptureScreen(): ReactElement {
           <Pressable
             key={category.id}
             onPress={(): void => setCategoryId(category.id)}
-            style={[styles.categoryPill, categoryId === category.id ? styles.categoryPillActive : styles.categoryPillIdle]}
+            style={[
+              styles.categoryPill,
+              categoryId === category.id ? styles.categoryPillActive : styles.categoryPillIdle,
+            ]}
           >
-            <Text style={categoryId === category.id ? styles.categoryTextActive : styles.categoryTextIdle}>{category.label}</Text>
+            <Text
+              style={
+                categoryId === category.id ? styles.categoryTextActive : styles.categoryTextIdle
+              }
+            >
+              {category.label}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -245,19 +293,39 @@ export default function CaptureScreen(): ReactElement {
       />
 
       <Text style={styles.label}>Tags</Text>
-      <TextInput onChangeText={setTags} placeholder="quiet, client, family..." style={styles.input} value={tags} />
+      <TextInput
+        onChangeText={setTags}
+        placeholder="quiet, client, family..."
+        style={styles.input}
+        value={tags}
+      />
 
       <Text style={styles.label}>Address Label</Text>
-      <TextInput onChangeText={setAddressLabel} placeholder="Manual label, no online lookup" style={styles.input} value={addressLabel} />
+      <TextInput
+        onChangeText={setAddressLabel}
+        placeholder="Manual label, no online lookup"
+        style={styles.input}
+        value={addressLabel}
+      />
 
       <Text style={styles.label}>Rating</Text>
-      <TextInput keyboardType="number-pad" onChangeText={setRatingText} placeholder="1 to 5" style={styles.input} value={ratingText} />
+      <TextInput
+        keyboardType="number-pad"
+        onChangeText={setRatingText}
+        placeholder="1 to 5"
+        style={styles.input}
+        value={ratingText}
+      />
 
       <View style={styles.formActions}>
         <Pressable onPress={(): void => clearCapturedPhoto()} style={styles.secondaryButton}>
           <Text style={styles.secondaryButtonText}>Retake</Text>
         </Pressable>
-        <Pressable disabled={isSaving || isLocating} onPress={savePlace} style={styles.primaryButton}>
+        <Pressable
+          disabled={isSaving || isLocating}
+          onPress={savePlace}
+          style={styles.primaryButton}
+        >
           <Text style={styles.primaryButtonText}>{isSaving ? 'Saving...' : 'Save Place'}</Text>
         </Pressable>
       </View>
@@ -272,7 +340,12 @@ type LocationStatusProps = {
   readonly onRetry: () => void;
 };
 
-const LocationStatus = ({ errorMessage, hasLocation, isLocating, onRetry }: LocationStatusProps): ReactElement => {
+const LocationStatus = ({
+  errorMessage,
+  hasLocation,
+  isLocating,
+  onRetry,
+}: LocationStatusProps): ReactElement => {
   if (isLocating) {
     return (
       <View style={styles.locationCard}>

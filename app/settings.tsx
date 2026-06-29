@@ -18,7 +18,8 @@ export default function SettingsScreen(): ReactElement {
     readAppPermissions()
       .then(setPermissions)
       .catch((error: unknown): void => {
-        const message = error instanceof Error ? error.message : 'Could not read permission status.';
+        const message =
+          error instanceof Error ? error.message : 'Could not read permission status.';
         Alert.alert('Permission check failed', message);
       });
   }, []);
@@ -54,7 +55,9 @@ export default function SettingsScreen(): ReactElement {
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Local-only by design</Text>
-      <Text style={styles.body}>DuneStack Places does not use login, cloud sync, analytics, or remote uploads in this MVP.</Text>
+      <Text style={styles.body}>
+        DuneStack Places does not use login, cloud sync, analytics, or remote uploads in this MVP.
+      </Text>
 
       <PermissionCard
         body="Used only when you take a place photo."
@@ -74,7 +77,9 @@ export default function SettingsScreen(): ReactElement {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Backups</Text>
-        <Text style={styles.cardBody}>Manual export and import are planned next, keeping control in the user's hands.</Text>
+        <Text style={styles.cardBody}>
+          Manual export and import are planned next, keeping control in the user&apos;s hands.
+        </Text>
       </View>
     </View>
   );
@@ -88,16 +93,35 @@ type PermissionCardProps = {
   readonly title: string;
 };
 
-const PermissionCard = ({ body, onOpenSettings, onRequest, permission, title }: PermissionCardProps): ReactElement => {
-  const buttonLabel = permission?.canAskAgain === false && permission.granted === false ? 'Open Settings' : 'Request Access';
-  const buttonAction = permission?.canAskAgain === false && permission.granted === false ? onOpenSettings : onRequest;
+const PermissionCard = ({
+  body,
+  onOpenSettings,
+  onRequest,
+  permission,
+  title,
+}: PermissionCardProps): ReactElement => {
+  const buttonLabel =
+    permission?.canAskAgain === false && permission.granted === false
+      ? 'Open Settings'
+      : 'Request Access';
+  const buttonAction =
+    permission?.canAskAgain === false && permission.granted === false ? onOpenSettings : onRequest;
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.cardTitle}>{title}</Text>
-        <View style={[styles.badge, permission?.granted === true ? styles.badgeAllowed : styles.badgeDenied]}>
-          <Text style={permission?.granted === true ? styles.badgeAllowedText : styles.badgeDeniedText}>{permission?.label ?? 'Checking'}</Text>
+        <View
+          style={[
+            styles.badge,
+            permission?.granted === true ? styles.badgeAllowed : styles.badgeDenied,
+          ]}
+        >
+          <Text
+            style={permission?.granted === true ? styles.badgeAllowedText : styles.badgeDeniedText}
+          >
+            {permission?.label ?? 'Checking'}
+          </Text>
         </View>
       </View>
       <Text style={styles.cardBody}>{body}</Text>

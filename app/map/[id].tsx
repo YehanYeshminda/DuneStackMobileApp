@@ -28,7 +28,8 @@ export default function SavedPositionScreen(): ReactElement {
     try {
       await Linking.openURL(url);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'The device could not open the saved coordinates.';
+      const message =
+        error instanceof Error ? error.message : 'The device could not open the saved coordinates.';
       Alert.alert('Could not open maps', message);
     }
   };
@@ -37,7 +38,9 @@ export default function SavedPositionScreen(): ReactElement {
     <View style={styles.screen}>
       <Text style={styles.eyebrow}>{getCategoryLabel(place.categoryId)}</Text>
       <Text style={styles.title}>{place.title}</Text>
-      <Text style={styles.body}>This privacy-safe preview uses the saved GPS point without loading online map tiles.</Text>
+      <Text style={styles.body}>
+        This privacy-safe preview uses the saved GPS point without loading online map tiles.
+      </Text>
 
       <LocalPositionCard onOpenMaps={openExternalMaps} place={place} />
 

@@ -19,4 +19,5 @@ export const createExternalMapsUrl = (place: PlaceRecord, platform: MapPlatform)
   return `https://www.google.com/maps/search/?api=1&query=${coordinates}`;
 };
 
-export const getCurrentMapsUrl = (place: PlaceRecord): string => createExternalMapsUrl(place, Platform.OS);
+export const getCurrentMapsUrl = (place: PlaceRecord): string =>
+  createExternalMapsUrl(place, Platform.OS);

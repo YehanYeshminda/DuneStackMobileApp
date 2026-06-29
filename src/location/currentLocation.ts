@@ -13,7 +13,9 @@ export const getCurrentPlaceLocation = async (): Promise<CapturedLocation> => {
   const permission = await Location.requestForegroundPermissionsAsync();
 
   if (!permission.granted) {
-    throw new Error('Location permission was denied. Enable location while using the app to save coordinates with a place.');
+    throw new Error(
+      'Location permission was denied. Enable location while using the app to save coordinates with a place.',
+    );
   }
 
   // Fast path: a recent cached fix returns almost instantly.
@@ -43,7 +45,11 @@ const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number): Promise<T
 
   const timeout = new Promise<never>((_resolve, reject): void => {
     timeoutHandle = setTimeout((): void => {
-      reject(new Error('Could not get a location fix in time. Make sure location is on, then tap Retry location.'));
+      reject(
+        new Error(
+          'Could not get a location fix in time. Make sure location is on, then tap Retry location.',
+        ),
+      );
     }, timeoutMs);
   });
 

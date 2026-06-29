@@ -2,7 +2,8 @@ import * as SQLite from 'expo-sqlite';
 
 import { migrations } from './migrations';
 
-export const databaseName = 'dunestack_places.db';
+export const databaseName =
+  process.env.JEST_WORKER_ID !== undefined ? ':memory:' : 'dunestack_places.db';
 
 let cachedDatabase: SQLite.SQLiteDatabase | null = null;
 let hasInitialized = false;
@@ -36,11 +37,30 @@ export const initializeDatabase = (): void => {
   hasInitialized = true;
 };
 
+/**
+ * Closes and clears the cached connection so the next `initializeDatabase()`
+ * starts from a fresh schema. Intended for use between tests only.
+ */
+export const resetDatabaseForTests = (): void => {
+  if (cachedDatabase !== null) {
+    try {
+      cachedDatabase.closeSync();
+    } catch {
+      // Connection was already closed; nothing to do.
+    }
+  }
+
+  cachedDatabase = null;
+  hasInitialized = false;
+};
+
 const runMigrations = (database: SQLite.SQLiteDatabase): void => {
   const result = database.getFirstSync<{ readonly user_version: number }>('PRAGMA user_version;');
   const currentVersion = result?.user_version ?? 0;
 
-  const pendingMigrations = migrations.filter((migration): boolean => migration.version > currentVersion);
+  const pendingMigrations = migrations.filter(
+    (migration): boolean => migration.version > currentVersion,
+  );
 
   for (const migration of pendingMigrations) {
     database.withTransactionSync((): void => {

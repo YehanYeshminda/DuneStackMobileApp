@@ -1,7 +1,16 @@
 import { CameraCapturedPicture, CameraView, useCameraPermissions } from 'expo-camera';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ReactElement, useEffect, useRef, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 import { categories, Category } from '../../../src/categories/categories';
 import { deleteLocalImage, saveCapturedImage } from '../../../src/files/localImages';
@@ -76,12 +85,18 @@ export default function EditPlaceScreen(): ReactElement {
     }
 
     if (!isCameraReady) {
-      Alert.alert('Camera is still loading', 'Wait until the camera preview is ready, then take the photo.');
+      Alert.alert(
+        'Camera is still loading',
+        'Wait until the camera preview is ready, then take the photo.',
+      );
       return;
     }
 
     if (cameraRef.current === null) {
-      Alert.alert('Camera unavailable', 'The camera preview is not available. Reopen this screen and try again.');
+      Alert.alert(
+        'Camera unavailable',
+        'The camera preview is not available. Reopen this screen and try again.',
+      );
       return;
     }
 
@@ -107,7 +122,10 @@ export default function EditPlaceScreen(): ReactElement {
         return;
       }
 
-      const message = error instanceof Error ? error.message : 'An unknown error occurred while retaking the photo.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while retaking the photo.';
       Alert.alert('Could not retake photo', message);
     } finally {
       isTakingPhotoRef.current = false;
@@ -128,19 +146,31 @@ export default function EditPlaceScreen(): ReactElement {
       return;
     }
 
-    if ((draftPhotoUri !== null || draftLocation !== null || draftCapturedAt !== null) && !isCompleteRetake(draftPhotoUri, draftLocation, draftCapturedAt)) {
-      Alert.alert('Retake incomplete', 'Retake the photo again so the image, capture time, and current geotag are saved together.');
+    if (
+      (draftPhotoUri !== null || draftLocation !== null || draftCapturedAt !== null) &&
+      !isCompleteRetake(draftPhotoUri, draftLocation, draftCapturedAt)
+    ) {
+      Alert.alert(
+        'Retake incomplete',
+        'Retake the photo again so the image, capture time, and current geotag are saved together.',
+      );
       return;
     }
 
     setIsSaving(true);
 
     try {
-      const savedPhotoUri = draftPhotoUri === null ? originalPlace.photoUri : await saveCapturedImage(draftPhotoUri);
+      const savedPhotoUri =
+        draftPhotoUri === null ? originalPlace.photoUri : await saveCapturedImage(draftPhotoUri);
       const savedCapturedAt = draftCapturedAt === null ? originalPlace.capturedAt : draftCapturedAt;
-      const savedLatitude = draftLocation === null ? originalPlace.latitude : draftLocation.latitude;
-      const savedLongitude = draftLocation === null ? originalPlace.longitude : draftLocation.longitude;
-      const savedAccuracy = draftLocation === null ? originalPlace.locationAccuracyMeters : draftLocation.accuracyMeters;
+      const savedLatitude =
+        draftLocation === null ? originalPlace.latitude : draftLocation.latitude;
+      const savedLongitude =
+        draftLocation === null ? originalPlace.longitude : draftLocation.longitude;
+      const savedAccuracy =
+        draftLocation === null
+          ? originalPlace.locationAccuracyMeters
+          : draftLocation.accuracyMeters;
       const updatedPlace = updatePlace(originalPlace.id, {
         addressLabel,
         capturedAt: savedCapturedAt,
@@ -162,7 +192,10 @@ export default function EditPlaceScreen(): ReactElement {
 
       router.replace(`/place/${updatedPlace.id}`);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred while updating the place.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while updating the place.';
       Alert.alert('Could not update place', message);
     } finally {
       setIsSaving(false);
@@ -189,9 +222,16 @@ export default function EditPlaceScreen(): ReactElement {
           <Pressable
             disabled={isTakingPhoto || !isCameraReady}
             onPress={takePhoto}
-            style={[styles.captureButton, isTakingPhoto || !isCameraReady ? styles.captureButtonDisabled : styles.captureButtonReady]}
+            style={[
+              styles.captureButton,
+              isTakingPhoto || !isCameraReady
+                ? styles.captureButtonDisabled
+                : styles.captureButtonReady,
+            ]}
           >
-            <Text style={styles.captureButtonText}>{isTakingPhoto ? 'Taking Photo...' : 'Take Photo'}</Text>
+            <Text style={styles.captureButtonText}>
+              {isTakingPhoto ? 'Taking Photo...' : 'Take Photo'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -220,7 +260,12 @@ export default function EditPlaceScreen(): ReactElement {
       </View>
 
       <Text style={styles.label}>Title</Text>
-      <TextInput onChangeText={setTitle} placeholder="e.g. Sunset coffee stop" style={styles.input} value={title} />
+      <TextInput
+        onChangeText={setTitle}
+        placeholder="e.g. Sunset coffee stop"
+        style={styles.input}
+        value={title}
+      />
 
       <Text style={styles.label}>Category</Text>
       <View style={styles.categoryGrid}>
@@ -228,24 +273,50 @@ export default function EditPlaceScreen(): ReactElement {
           <Pressable
             key={category.id}
             onPress={(): void => setCategoryId(category.id)}
-            style={[styles.categoryPill, categoryId === category.id ? styles.categoryPillActive : styles.categoryPillIdle]}
+            style={[
+              styles.categoryPill,
+              categoryId === category.id ? styles.categoryPillActive : styles.categoryPillIdle,
+            ]}
           >
-            <Text style={categoryId === category.id ? styles.categoryTextActive : styles.categoryTextIdle}>{category.label}</Text>
+            <Text
+              style={
+                categoryId === category.id ? styles.categoryTextActive : styles.categoryTextIdle
+              }
+            >
+              {category.label}
+            </Text>
           </Pressable>
         ))}
       </View>
 
       <Text style={styles.label}>Notes</Text>
-      <TextInput multiline onChangeText={setNotes} placeholder="Notes" style={[styles.input, styles.notesInput]} value={notes} />
+      <TextInput
+        multiline
+        onChangeText={setNotes}
+        placeholder="Notes"
+        style={[styles.input, styles.notesInput]}
+        value={notes}
+      />
 
       <Text style={styles.label}>Tags</Text>
       <TextInput onChangeText={setTags} placeholder="Tags" style={styles.input} value={tags} />
 
       <Text style={styles.label}>Address Label</Text>
-      <TextInput onChangeText={setAddressLabel} placeholder="Manual label" style={styles.input} value={addressLabel} />
+      <TextInput
+        onChangeText={setAddressLabel}
+        placeholder="Manual label"
+        style={styles.input}
+        value={addressLabel}
+      />
 
       <Text style={styles.label}>Rating</Text>
-      <TextInput keyboardType="number-pad" onChangeText={setRatingText} placeholder="1 to 5" style={styles.input} value={ratingText} />
+      <TextInput
+        keyboardType="number-pad"
+        onChangeText={setRatingText}
+        placeholder="1 to 5"
+        style={styles.input}
+        value={ratingText}
+      />
 
       <View style={styles.formActions}>
         <Pressable onPress={(): void => router.back()} style={styles.secondaryActionButton}>
@@ -259,8 +330,11 @@ export default function EditPlaceScreen(): ReactElement {
   );
 }
 
-const isCompleteRetake = (photoUri: string | null, location: CapturedLocation | null, capturedAt: string | null): boolean =>
-  photoUri !== null && location !== null && capturedAt !== null;
+const isCompleteRetake = (
+  photoUri: string | null,
+  location: CapturedLocation | null,
+  capturedAt: string | null,
+): boolean => photoUri !== null && location !== null && capturedAt !== null;
 
 const styles = StyleSheet.create({
   body: {
