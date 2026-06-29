@@ -4,6 +4,7 @@ import { ReactElement, useCallback, useState } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { getCategoryLabel } from '../../src/categories/categories';
+import { useIsOnline } from '../../src/network/useIsOnline';
 import { listPlaces } from '../../src/places/placeRepository';
 import { PlaceRecord } from '../../src/places/placeTypes';
 import { colors, spacing } from '../../src/shared/theme';
@@ -15,6 +16,7 @@ type MapCoordinates = {
 
 export default function PlacesMapScreen(): ReactElement {
   const [places, setPlaces] = useState<PlaceRecord[]>([]);
+  const isOnline = useIsOnline();
 
   useFocusEffect(
     useCallback((): void => {
@@ -29,6 +31,15 @@ export default function PlacesMapScreen(): ReactElement {
 
     router.push(`/place/${id}`);
   }, []);
+
+  if (!isOnline) {
+    return (
+      <View style={styles.messageScreen}>
+        <Text style={styles.messageTitle}>Map needs an internet connection</Text>
+        <Text style={styles.messageBody}>Reconnect to view your places on the map.</Text>
+      </View>
+    );
+  }
 
   if (places.length === 0) {
     return (

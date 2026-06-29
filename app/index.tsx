@@ -3,6 +3,7 @@ import { ReactElement, useCallback, useState } from 'react';
 import { FlatList, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { getCategoryLabel } from '../src/categories/categories';
+import { useIsOnline } from '../src/network/useIsOnline';
 import { listPlaces } from '../src/places/placeRepository';
 import { PlaceRecord } from '../src/places/placeTypes';
 import { colors, spacing } from '../src/shared/theme';
@@ -13,6 +14,7 @@ export default function HomeScreen(): ReactElement {
   const [places, setPlaces] = useState<PlaceRecord[]>([]);
   const [placeFilter, setPlaceFilter] = useState<PlaceFilter>('all');
   const [query, setQuery] = useState<string>('');
+  const isOnline = useIsOnline();
 
   const loadPlaces = useCallback((): void => {
     const savedPlaces = listPlaces(query);
@@ -39,11 +41,13 @@ export default function HomeScreen(): ReactElement {
             <Text style={styles.primaryButtonText}>Add Place</Text>
           </Pressable>
         </Link>
-        <Link asChild href="/map">
-          <Pressable style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Map</Text>
-          </Pressable>
-        </Link>
+        {isOnline ? (
+          <Link asChild href="/map">
+            <Pressable style={styles.secondaryButton}>
+              <Text style={styles.secondaryButtonText}>Map</Text>
+            </Pressable>
+          </Link>
+        ) : null}
         <Link asChild href="/gallery">
           <Pressable style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Gallery</Text>
