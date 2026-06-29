@@ -1,7 +1,8 @@
 import { useFocusEffect } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { exportBackup, importBackup } from '../src/backup/backupService';
 import {
   AppPermissions,
   AppPermissionState,
@@ -52,6 +53,51 @@ export default function SettingsScreen(): ReactElement {
     await Linking.openSettings();
   };
 
+  const [isBackingUp, setIsBackingUp] = useState<boolean>(false);
+
+  const handleExport = async (): Promise<void> => {
+    setIsBackingUp(true);
+
+    try {
+      const result = await exportBackup();
+
+      if (result.placeCount === 0) {
+        Alert.alert('Nothing to export', 'Save a place first, then export a backup.');
+        return;
+      }
+
+      if (!result.shared) {
+        Alert.alert(
+          'Sharing unavailable',
+          'The backup was created but sharing is not available on this device.',
+        );
+      }
+    } catch (error: unknown) {
+      Alert.alert('Export failed', describeBackupError(error));
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  const handleImport = async (): Promise<void> => {
+    setIsBackingUp(true);
+
+    try {
+      const result = await importBackup();
+
+      if (result.canceled) {
+        return;
+      }
+
+      const noun = result.importedCount === 1 ? 'place' : 'places';
+      Alert.alert('Import complete', `Restored ${result.importedCount} ${noun}.`);
+    } catch (error: unknown) {
+      Alert.alert('Import failed', describeBackupError(error));
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Local-only by design</Text>
@@ -78,12 +124,47 @@ export default function SettingsScreen(): ReactElement {
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Backups</Text>
         <Text style={styles.cardBody}>
-          Manual export and import are planned next, keeping control in the user&apos;s hands.
+          Export all your places to a single file you control, or import one to restore them on this
+          device. Imports are additive and never overwrite existing places.
         </Text>
+        <View style={styles.backupActions}>
+          <Pressable
+            disabled={isBackingUp}
+            onPress={(): void => {
+              void handleExport();
+            }}
+            style={[styles.permissionButton, styles.backupButton]}
+          >
+            <Text style={styles.permissionButtonText}>Export backup</Text>
+          </Pressable>
+          <Pressable
+            disabled={isBackingUp}
+            onPress={(): void => {
+              void handleImport();
+            }}
+            style={[styles.secondaryButton, styles.backupButton]}
+          >
+            <Text style={styles.secondaryButtonText}>Import backup</Text>
+          </Pressable>
+        </View>
+        {isBackingUp ? (
+          <View style={styles.backupBusy}>
+            <ActivityIndicator color={colors.primary} />
+            <Text style={styles.permissionMeta}>Working...</Text>
+          </View>
+        ) : null}
       </View>
     </View>
   );
 }
+
+const describeBackupError = (error: unknown): string => {
+  if (error instanceof Error && error.name === 'ZodError') {
+    return 'This backup file is not in the expected format.';
+  }
+
+  return error instanceof Error ? error.message : 'Something went wrong.';
+};
 
 type PermissionCardProps = {
   readonly body: string;
@@ -136,6 +217,21 @@ const PermissionCard = ({
 };
 
 const styles = StyleSheet.create({
+  backupActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  backupBusy: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  backupButton: {
+    flex: 1,
+    marginTop: 0,
+  },
   badge: {
     borderRadius: 999,
     paddingHorizontal: spacing.sm,
@@ -203,6 +299,19 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     marginTop: spacing.xs,
+  },
+  secondaryButton: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: spacing.md,
+  },
+  secondaryButtonText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
   },
   screen: {
     backgroundColor: colors.background,

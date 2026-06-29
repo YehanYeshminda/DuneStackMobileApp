@@ -57,6 +57,17 @@ export const migrations: readonly Migration[] = [
       seedDefaultCategories(database);
     },
   },
+  {
+    version: 2,
+    up: (database: SQLite.SQLiteDatabase): void => {
+      // Soft-delete: a tombstone column so deletes can survive a future sync.
+      database.execSync(`
+        ALTER TABLE places ADD COLUMN deleted_at TEXT;
+
+        CREATE INDEX IF NOT EXISTS idx_places_deleted_at ON places (deleted_at);
+      `);
+    },
+  },
 ];
 
 const seedDefaultCategories = (database: SQLite.SQLiteDatabase): void => {

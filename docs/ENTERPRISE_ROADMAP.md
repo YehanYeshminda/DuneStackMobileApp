@@ -169,9 +169,17 @@ still works offline and feels instant.
 - [x] Initialize the DB once (remove per-call `initializeDatabase()`).
 
 ### Phase 1 — Data durability & portability (2–3 weeks)
-- [ ] Implement **manual export** (zip of SQLite + images via `expo-sharing`).
-- [ ] Implement **import** (`expo-document-picker`) with validation.
-- [ ] Add soft-delete (`deleted_at`) so deletes survive a future sync.
+- [x] Implement **manual export** — single JSON backup with photos embedded as
+      base64, shared via `expo-sharing`. (`src/backup/backupService.ts`)
+- [x] Implement **import** (`expo-document-picker`) with `zod` validation.
+      (`src/backup/backupService.ts` + `backupTypes.ts`; additive restore via
+      `importPlace` in `placeRepository.ts`)
+- [x] Add soft-delete (`deleted_at`) so deletes survive a future sync.
+      (migration v2; reads filter `deleted_at IS NULL`, `deletePlace` tombstones)
+
+> Note: export embeds images as base64 in one JSON file rather than zipping the
+> raw SQLite db + image files. This keeps the backup self-contained and adds no
+> new dependencies; revisit zipping if backup size becomes a concern.
 
 ### Phase 2 — Identity & backend (3–5 weeks)
 - [ ] Stand up backend (Auth + Postgres + object storage).
