@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   badgeDenied: {
-    backgroundColor: '#F7E8DF',
+    backgroundColor: '#FBE7E4',
   },
   badgeDeniedText: {
-    color: colors.accent,
+    color: colors.danger,
     fontSize: 12,
     fontWeight: '800',
   },

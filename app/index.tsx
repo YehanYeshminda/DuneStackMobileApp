@@ -49,7 +49,7 @@ export default function HomeScreen(): ReactElement {
       <TextInput
         onChangeText={setQuery}
         placeholder="Search places"
-        placeholderTextColor="#8D7B68"
+        placeholderTextColor={colors.muted}
         style={styles.search}
         value={query}
       />
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   cardBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 253, 248, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.92)',
     borderRadius: 999,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   cardMeta: {
-    color: '#F8EFE6',
+    color: '#E8EEF4',
     fontSize: 14,
     marginTop: 4,
   },
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cardOverlay: {
-    backgroundColor: 'rgba(36, 23, 15, 0.36)',
+    backgroundColor: 'rgba(16, 32, 43, 0.40)',
     bottom: 0,
     justifyContent: 'space-between',
     left: 0,

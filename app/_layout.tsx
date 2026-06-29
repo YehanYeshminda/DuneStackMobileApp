@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ReactElement, useEffect } from 'react';
 
 import { initializeDatabase } from '../src/database/database';
+import { colors } from '../src/shared/theme';
 
 export default function RootLayout(): ReactElement {
   useEffect((): void => {
@@ -14,10 +15,10 @@ export default function RootLayout(): ReactElement {
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          contentStyle: { backgroundColor: '#F7F2EA' },
+          contentStyle: { backgroundColor: colors.background },
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: '#F7F2EA' },
-          headerTintColor: '#24170F',
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: '700' },
         }}
       >
