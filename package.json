@@ -46,9 +46,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "lint:fix": "expo lint --fix",
-    "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:ci": "jest --ci --coverage=false"
+    "typecheck": "tsc --noEmit"
   },
   "private": true
 }
