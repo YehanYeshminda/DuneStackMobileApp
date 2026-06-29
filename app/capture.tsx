@@ -1,7 +1,7 @@
 import { CameraCapturedPicture, CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import { ReactElement, useEffect, useRef, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { categories, Category } from '../src/categories/categories';
 import { saveCapturedImage } from '../src/files/localImages';
@@ -20,6 +20,8 @@ export default function CaptureScreen(): ReactElement {
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState<boolean>(false);
+  const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [title, setTitle] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('memory');
   const [notes, setNotes] = useState<string>('');
@@ -36,6 +38,32 @@ export default function CaptureScreen(): ReactElement {
       isTakingPhotoRef.current = false;
     };
   }, []);
+
+  const fetchCurrentLocation = async (): Promise<void> => {
+    setIsLocating(true);
+    setLocationError(null);
+
+    try {
+      const location = await getCurrentPlaceLocation();
+
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      setCapturedLocation(location);
+    } catch (error: unknown) {
+      if (!isMountedRef.current) {
+        return;
+      }
+
+      const message = error instanceof Error ? error.message : 'Could not get your location.';
+      setLocationError(message);
+    } finally {
+      if (isMountedRef.current) {
+        setIsLocating(false);
+      }
+    }
+  };
 
   const takePhoto = async (): Promise<void> => {
     if (isTakingPhotoRef.current) {
@@ -68,15 +96,16 @@ export default function CaptureScreen(): ReactElement {
       const photo: CameraCapturedPicture = await cameraRef.current.takePictureAsync({
         quality: 0.85,
       });
-      const location = await getCurrentPlaceLocation();
 
       if (!isMountedRef.current) {
         return;
       }
 
       setCapturedAt(new Date().toISOString());
-      setCapturedLocation(location);
       setCapturedPhotoUri(photo.uri);
+
+      // Fetch location in the background so the form appears immediately.
+      void fetchCurrentLocation();
     } catch (error: unknown) {
       if (!isMountedRef.current) {
         return;
@@ -100,7 +129,10 @@ export default function CaptureScreen(): ReactElement {
     }
 
     if (capturedLocation === null) {
-      Alert.alert('Location required', 'Retake the photo so the app can save the current geotag with it.');
+      Alert.alert(
+        'Location not ready',
+        isLocating ? 'Still getting your location. Try again in a moment.' : 'Tap "Retry location" to add a geotag before saving.',
+      );
       return;
     }
 
@@ -146,6 +178,8 @@ export default function CaptureScreen(): ReactElement {
     setCapturedAt(null);
     setCapturedPhotoUri(null);
     setCapturedLocation(null);
+    setLocationError(null);
+    setIsLocating(false);
   };
 
   if (capturedPhotoUri === null) {
@@ -175,6 +209,15 @@ export default function CaptureScreen(): ReactElement {
   return (
     <ScrollView contentContainerStyle={styles.formContent} style={styles.formScreen}>
       <Image source={{ uri: capturedPhotoUri }} style={styles.previewImage} />
+
+      <LocationStatus
+        errorMessage={locationError}
+        hasLocation={capturedLocation !== null}
+        isLocating={isLocating}
+        onRetry={(): void => {
+          void fetchCurrentLocation();
+        }}
+      />
 
       <Text style={styles.label}>Title</Text>
       <TextInput onChangeText={setTitle} placeholder="e.g. Sunset coffee stop" style={styles.input} value={title} />
@@ -214,13 +257,59 @@ export default function CaptureScreen(): ReactElement {
         <Pressable onPress={(): void => clearCapturedPhoto()} style={styles.secondaryButton}>
           <Text style={styles.secondaryButtonText}>Retake</Text>
         </Pressable>
-        <Pressable disabled={isSaving} onPress={savePlace} style={styles.primaryButton}>
+        <Pressable disabled={isSaving || isLocating} onPress={savePlace} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>{isSaving ? 'Saving...' : 'Save Place'}</Text>
         </Pressable>
       </View>
     </ScrollView>
   );
 }
+
+type LocationStatusProps = {
+  readonly errorMessage: string | null;
+  readonly hasLocation: boolean;
+  readonly isLocating: boolean;
+  readonly onRetry: () => void;
+};
+
+const LocationStatus = ({ errorMessage, hasLocation, isLocating, onRetry }: LocationStatusProps): ReactElement => {
+  if (isLocating) {
+    return (
+      <View style={styles.locationCard}>
+        <ActivityIndicator color={colors.primary} />
+        <Text style={styles.locationText}>Getting your location...</Text>
+      </View>
+    );
+  }
+
+  if (errorMessage !== null) {
+    return (
+      <View style={styles.locationCard}>
+        <Text style={styles.locationErrorText}>{errorMessage}</Text>
+        <Pressable onPress={onRetry} style={styles.locationButton}>
+          <Text style={styles.locationButtonText}>Retry location</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (hasLocation) {
+    return (
+      <View style={styles.locationCard}>
+        <Text style={styles.locationText}>Location added to this place.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.locationCard}>
+      <Text style={styles.locationText}>No location yet.</Text>
+      <Pressable onPress={onRetry} style={styles.locationButton}>
+        <Text style={styles.locationButtonText}>Add location</Text>
+      </Pressable>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   camera: {
@@ -314,6 +403,40 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     marginBottom: spacing.xs,
+  },
+  locationButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  locationButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  locationCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    padding: spacing.md,
+  },
+  locationErrorText: {
+    color: colors.danger,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  locationText: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
   },
   notesInput: {
     minHeight: 120,
