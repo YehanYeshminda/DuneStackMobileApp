@@ -39,6 +39,11 @@ export default function HomeScreen(): ReactElement {
             <Text style={styles.primaryButtonText}>Add Place</Text>
           </Pressable>
         </Link>
+        <Link asChild href="/map">
+          <Pressable style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Map</Text>
+          </Pressable>
+        </Link>
         <Link asChild href="/gallery">
           <Pressable style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Gallery</Text>
@@ -266,8 +271,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 18,
     borderWidth: 1,
-    padding: spacing.md,
-    minWidth: 96,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   secondaryButtonText: {
     color: colors.text,
