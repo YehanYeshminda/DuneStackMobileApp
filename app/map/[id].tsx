@@ -67,23 +67,14 @@ const LocalPositionCard = ({ onOpenMaps, place }: LocalPositionCardProps): React
       <View style={styles.pinInner} />
     </View>
     <View style={styles.coordinatePanel}>
-      <Text style={styles.coordinateLabel}>Saved coordinates</Text>
-      <Text style={styles.coordinateValue}>{place.latitude.toFixed(6)}, {place.longitude.toFixed(6)}</Text>
-      <Text style={styles.coordinateMeta}>Accuracy: {formatAccuracy(place.locationAccuracyMeters)}</Text>
+      <Text style={styles.coordinateLabel}>Saved location</Text>
+      <Text style={styles.coordinateValue}>{place.title}</Text>
       <Pressable onPress={onOpenMaps} style={styles.mapsButton}>
         <Text style={styles.mapsButtonText}>Open in Maps</Text>
       </Pressable>
     </View>
   </View>
 );
-
-const formatAccuracy = (value: number | null): string => {
-  if (value === null) {
-    return 'Unknown';
-  }
-
-  return `${Math.round(value)} m`;
-};
 
 const styles = StyleSheet.create({
   body: {
@@ -97,11 +88,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
     textTransform: 'uppercase',
-  },
-  coordinateMeta: {
-    color: colors.muted,
-    fontSize: 13,
-    marginTop: spacing.xs,
   },
   coordinatePanel: {
     backgroundColor: colors.surface,

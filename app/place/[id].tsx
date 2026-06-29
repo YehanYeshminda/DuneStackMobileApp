@@ -79,10 +79,7 @@ export default function PlaceDetailScreen(): ReactElement {
       <Text style={styles.title}>{place.title}</Text>
 
       <View style={styles.metaGrid}>
-        <InfoCard label="Latitude" value={place.latitude.toFixed(6)} />
-        <InfoCard label="Longitude" value={place.longitude.toFixed(6)} />
         <InfoCard label="Captured" value={new Date(place.capturedAt).toLocaleString()} />
-        <InfoCard label="Accuracy" value={formatAccuracy(place.locationAccuracyMeters)} />
       </View>
 
       <Section title="Notes" value={place.notes.length > 0 ? place.notes : 'No notes saved.'} />
@@ -131,14 +128,6 @@ const Section = ({ title, value }: SectionProps): ReactElement => (
     <Text style={styles.body}>{value}</Text>
   </View>
 );
-
-const formatAccuracy = (value: number | null): string => {
-  if (value === null) {
-    return 'Unknown';
-  }
-
-  return `${Math.round(value)} m`;
-};
 
 const styles = StyleSheet.create({
   actions: {

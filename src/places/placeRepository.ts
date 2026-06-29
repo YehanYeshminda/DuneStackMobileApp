@@ -1,9 +1,9 @@
-import { getDatabase, initializeDatabase } from '../database/database';
+import * as Crypto from 'expo-crypto';
+
+import { getDatabase } from '../database/database';
 import { CreatePlaceInput, PlaceRecord, PlaceRow, UpdatePlaceInput } from './placeTypes';
 
 export const createPlace = (input: CreatePlaceInput): PlaceRecord => {
-  initializeDatabase();
-
   const database = getDatabase();
   const timestamp = new Date().toISOString();
   const id = createLocalId('place');
@@ -52,8 +52,6 @@ export const createPlace = (input: CreatePlaceInput): PlaceRecord => {
 };
 
 export const listPlaces = (query: string): PlaceRecord[] => {
-  initializeDatabase();
-
   const database = getDatabase();
   const normalizedQuery = `%${query.trim().toLowerCase()}%`;
   const rows = database.getAllSync<PlaceRow>(
@@ -75,8 +73,6 @@ export const listPlaces = (query: string): PlaceRecord[] => {
 };
 
 export const getPlaceById = (id: string): PlaceRecord => {
-  initializeDatabase();
-
   const database = getDatabase();
   const row = database.getFirstSync<PlaceRow>(
     `
@@ -95,8 +91,6 @@ export const getPlaceById = (id: string): PlaceRecord => {
 };
 
 export const deletePlace = (id: string): void => {
-  initializeDatabase();
-
   const database = getDatabase();
   database.runSync(
     `
@@ -108,8 +102,6 @@ export const deletePlace = (id: string): void => {
 };
 
 export const updatePlace = (id: string, input: UpdatePlaceInput): PlaceRecord => {
-  initializeDatabase();
-
   const database = getDatabase();
   database.runSync(
     `
@@ -150,8 +142,6 @@ export const updatePlace = (id: string, input: UpdatePlaceInput): PlaceRecord =>
 };
 
 export const setPlaceFavorite = (id: string, isFavorite: boolean): PlaceRecord => {
-  initializeDatabase();
-
   const database = getDatabase();
   database.runSync(
     `
@@ -186,9 +176,4 @@ const mapPlaceRow = (row: PlaceRow): PlaceRecord => ({
   visitDate: row.visit_date,
 });
 
-const createLocalId = (prefix: string): string => {
-  const randomValue = Math.random().toString(36).slice(2, 12);
-  const timeValue = Date.now().toString(36);
-
-  return `${prefix}_${timeValue}_${randomValue}`;
-};
+const createLocalId = (prefix: string): string => `${prefix}_${Crypto.randomUUID()}`;

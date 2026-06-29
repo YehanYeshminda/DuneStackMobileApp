@@ -159,10 +159,11 @@ still works offline and feels instant.
 - [ ] Add ESLint + Prettier + `tsc --noEmit`; wire into a GitHub Actions CI job.
 - [ ] Add a unit-test harness (Jest + `@testing-library/react-native`). Start with
       `placeValidation.ts` and `placeRepository.ts`.
-- [ ] Introduce schema **migrations** keyed off `PRAGMA user_version`.
-- [ ] Switch IDs to UUID v4 (`expo-crypto`).
-- [ ] Delete dead `App.tsx`; dedupe Android permissions in `app.json`.
-- [ ] Initialize the DB once (remove per-call `initializeDatabase()`).
+- [x] Introduce schema **migrations** keyed off `PRAGMA user_version`.
+      (`src/database/migrations.ts` + `src/database/database.ts`)
+- [x] Switch IDs to UUID v4 (`expo-crypto`). (`createLocalId` in `placeRepository.ts`)
+- [x] Delete dead `App.tsx` and `index.ts`; dedupe Android permissions in `app.json`.
+- [x] Initialize the DB once (remove per-call `initializeDatabase()`).
 
 ### Phase 1 — Data durability & portability (2–3 weeks)
 - [ ] Implement **manual export** (zip of SQLite + images via `expo-sharing`).

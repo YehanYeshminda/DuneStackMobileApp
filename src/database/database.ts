@@ -1,65 +1,52 @@
 import * as SQLite from 'expo-sqlite';
 
-import { categories, Category } from '../categories/categories';
+import { migrations } from './migrations';
 
 export const databaseName = 'dunestack_places.db';
 
-export const getDatabase = (): SQLite.SQLiteDatabase => SQLite.openDatabaseSync(databaseName);
+let cachedDatabase: SQLite.SQLiteDatabase | null = null;
+let hasInitialized = false;
 
-export const initializeDatabase = (): void => {
-  const database = getDatabase();
+export const getDatabase = (): SQLite.SQLiteDatabase => {
+  if (cachedDatabase === null) {
+    cachedDatabase = SQLite.openDatabaseSync(databaseName);
+  }
 
-  database.execSync(`
-    PRAGMA journal_mode = WAL;
-
-    CREATE TABLE IF NOT EXISTS categories (
-      id TEXT PRIMARY KEY NOT NULL,
-      name TEXT NOT NULL,
-      color TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS places (
-      id TEXT PRIMARY KEY NOT NULL,
-      title TEXT NOT NULL,
-      category_id TEXT NOT NULL,
-      photo_uri TEXT NOT NULL,
-      latitude REAL NOT NULL,
-      longitude REAL NOT NULL,
-      location_accuracy_meters REAL,
-      captured_at TEXT NOT NULL,
-      notes TEXT NOT NULL,
-      tags TEXT NOT NULL,
-      rating INTEGER,
-      is_favorite INTEGER NOT NULL,
-      address_label TEXT NOT NULL,
-      visit_date TEXT NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      FOREIGN KEY (category_id) REFERENCES categories (id)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_places_category_id ON places (category_id);
-    CREATE INDEX IF NOT EXISTS idx_places_created_at ON places (created_at);
-    CREATE INDEX IF NOT EXISTS idx_places_is_favorite ON places (is_favorite);
-  `);
-
-  seedCategories(database, new Date().toISOString());
+  return cachedDatabase;
 };
 
-const seedCategories = (database: SQLite.SQLiteDatabase, timestamp: string): void => {
-  categories.forEach((category: Category): void => {
-    database.runSync(
-      `
-        INSERT OR IGNORE INTO categories (id, name, color, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?);
-      `,
-      category.id,
-      category.label,
-      category.color,
-      timestamp,
-      timestamp,
-    );
-  });
+/**
+ * Prepares the database connection and applies any pending schema migrations.
+ *
+ * Safe to call multiple times: migrations run only once per version, and the
+ * work is skipped entirely after the first successful run in this app session.
+ * Call once at app start (see `app/_layout.tsx`).
+ */
+export const initializeDatabase = (): void => {
+  if (hasInitialized) {
+    return;
+  }
+
+  const database = getDatabase();
+
+  // journal_mode cannot run inside a transaction, so set it before migrations.
+  database.execSync('PRAGMA journal_mode = WAL;');
+  runMigrations(database);
+
+  hasInitialized = true;
+};
+
+const runMigrations = (database: SQLite.SQLiteDatabase): void => {
+  const result = database.getFirstSync<{ readonly user_version: number }>('PRAGMA user_version;');
+  const currentVersion = result?.user_version ?? 0;
+
+  const pendingMigrations = migrations.filter((migration): boolean => migration.version > currentVersion);
+
+  for (const migration of pendingMigrations) {
+    database.withTransactionSync((): void => {
+      migration.up(database);
+      // Version is an integer from our own code, so it is safe to inline.
+      database.execSync(`PRAGMA user_version = ${migration.version};`);
+    });
+  }
 };
