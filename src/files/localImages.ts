@@ -15,6 +15,30 @@ export const saveCapturedImage = async (sourceUri: string): Promise<string> => {
   return destinationFile.uri;
 };
 
+export const readImageBase64 = async (imageUri: string): Promise<string> => {
+  const imageFile = new File(imageUri);
+
+  if (!imageFile.exists) {
+    throw new Error(`Image file is missing: ${imageUri}`);
+  }
+
+  return imageFile.base64();
+};
+
+export const saveBase64Image = (base64: string, sourceName: string): string => {
+  const directory = getImageDirectory();
+
+  if (!directory.exists) {
+    directory.create({ idempotent: true, intermediates: true });
+  }
+
+  const destinationFile = new File(directory, createImageName(sourceName));
+  destinationFile.create({ overwrite: true });
+  destinationFile.write(base64, { encoding: 'base64' });
+
+  return destinationFile.uri;
+};
+
 export const deleteLocalImage = async (imageUri: string): Promise<void> => {
   const imageFile = new File(imageUri);
 

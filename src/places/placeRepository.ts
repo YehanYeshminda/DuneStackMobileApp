@@ -1,7 +1,13 @@
 import * as Crypto from 'expo-crypto';
 
 import { getDatabase } from '../database/database';
-import { CreatePlaceInput, PlaceRecord, PlaceRow, UpdatePlaceInput } from './placeTypes';
+import {
+  CreatePlaceInput,
+  ImportPlaceInput,
+  PlaceRecord,
+  PlaceRow,
+  UpdatePlaceInput,
+} from './placeTypes';
 
 export const createPlace = (input: CreatePlaceInput): PlaceRecord => {
   const database = getDatabase();
@@ -59,9 +65,12 @@ export const listPlaces = (query: string): PlaceRecord[] => {
       SELECT *
       FROM places
       WHERE
-        lower(title) LIKE ?
-        OR lower(notes) LIKE ?
-        OR lower(tags) LIKE ?
+        deleted_at IS NULL
+        AND (
+          lower(title) LIKE ?
+          OR lower(notes) LIKE ?
+          OR lower(tags) LIKE ?
+        )
       ORDER BY datetime(created_at) DESC;
     `,
     normalizedQuery,
@@ -78,7 +87,7 @@ export const getPlaceById = (id: string): PlaceRecord => {
     `
       SELECT *
       FROM places
-      WHERE id = ?;
+      WHERE id = ? AND deleted_at IS NULL;
     `,
     id,
   );
@@ -92,11 +101,17 @@ export const getPlaceById = (id: string): PlaceRecord => {
 
 export const deletePlace = (id: string): void => {
   const database = getDatabase();
+  const timestamp = new Date().toISOString();
+
+  // Soft delete: keep the row as a tombstone so the deletion can sync later.
   database.runSync(
     `
-      DELETE FROM places
+      UPDATE places
+      SET deleted_at = ?, updated_at = ?
       WHERE id = ?;
     `,
+    timestamp,
+    timestamp,
     id,
   );
 };
@@ -152,6 +167,54 @@ export const setPlaceFavorite = (id: string, isFavorite: boolean): PlaceRecord =
     isFavorite ? 1 : 0,
     new Date().toISOString(),
     id,
+  );
+
+  return getPlaceById(id);
+};
+
+export const importPlace = (input: ImportPlaceInput): PlaceRecord => {
+  const database = getDatabase();
+  const id = createLocalId('place');
+
+  // Restore a backed-up place with a fresh id but its original field values.
+  database.runSync(
+    `
+      INSERT INTO places (
+        id,
+        title,
+        category_id,
+        photo_uri,
+        latitude,
+        longitude,
+        location_accuracy_meters,
+        captured_at,
+        notes,
+        tags,
+        rating,
+        is_favorite,
+        address_label,
+        visit_date,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    `,
+    id,
+    input.title,
+    input.categoryId,
+    input.photoUri,
+    input.latitude,
+    input.longitude,
+    input.locationAccuracyMeters,
+    input.capturedAt,
+    input.notes,
+    input.tags,
+    input.rating,
+    input.isFavorite ? 1 : 0,
+    input.addressLabel,
+    input.visitDate,
+    input.createdAt,
+    input.updatedAt,
   );
 
   return getPlaceById(id);

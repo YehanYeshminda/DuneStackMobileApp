@@ -17,6 +17,12 @@ export type PlaceRecord = {
   readonly visitDate: string;
 };
 
+/**
+ * A place restored from a backup file. Carries the full record (minus the
+ * generated `id`) so timestamps, favorite state, and ratings are preserved.
+ */
+export type ImportPlaceInput = Omit<PlaceRecord, 'id'>;
+
 export type CreatePlaceInput = {
   readonly addressLabel: string;
   readonly categoryId: string;
@@ -64,4 +70,5 @@ export type PlaceRow = {
   readonly title: string;
   readonly updated_at: string;
   readonly visit_date: string;
+  readonly deleted_at: string | null;
 };
