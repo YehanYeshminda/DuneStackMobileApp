@@ -100,13 +100,13 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   tileMeta: {
-    color: '#F5EDE4',
+    color: '#E8EEF4',
     fontSize: 12,
     fontWeight: '700',
     marginTop: 3,
   },
   tileOverlay: {
-    backgroundColor: 'rgba(36, 23, 15, 0.64)',
+    backgroundColor: 'rgba(16, 32, 43, 0.64)',
     padding: spacing.md,
   },
   tileTitle: {

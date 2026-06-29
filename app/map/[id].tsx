@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   gridLineHorizontalOne: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     height: 1,
     left: 0,
     position: 'absolute',
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     top: '34%',
   },
   gridLineHorizontalTwo: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     height: 1,
     left: 0,
     position: 'absolute',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     top: '62%',
   },
   gridLineVerticalOne: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     bottom: 0,
     left: '32%',
     position: 'absolute',
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     width: 1,
   },
   gridLineVerticalTwo: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     bottom: 0,
     left: '68%',
     position: 'absolute',
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     width: 1,
   },
   mapCard: {
-    backgroundColor: '#EFE2D1',
+    backgroundColor: '#E4ECF3',
     borderColor: colors.border,
     borderRadius: 28,
     borderWidth: 1,

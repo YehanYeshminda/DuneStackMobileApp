@@ -18,14 +18,14 @@ export type AppSpacing = {
 };
 
 export const colors: AppColors = {
-  accent: '#B46A3C',
-  background: '#F7F2EA',
-  border: '#E1D4C5',
-  danger: '#B93232',
-  muted: '#756454',
-  primary: '#4B3428',
-  surface: '#FFFDF8',
-  text: '#24170F',
+  accent: '#2C7A7B',
+  background: '#F4F7FA',
+  border: '#DCE4EC',
+  danger: '#C0392B',
+  muted: '#5C6B7A',
+  primary: '#1F3A5F',
+  surface: '#FFFFFF',
+  text: '#16202B',
 };
 
 export const spacing: AppSpacing = {
