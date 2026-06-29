@@ -17,8 +17,8 @@ and favorite flag.
 | Accounts | None — single anonymous user per device |
 | Sync / backup | None implemented (settings screen says "planned next") |
 | Networking | None — no API, no telemetry, no remote calls |
-| Tests | None |
-| CI/CD | None |
+| Tests | Jest unit/integration tests for `placeValidation` and `placeRepository` |
+| CI/CD | GitHub Actions runs ESLint, `tsc --noEmit`, and Jest on push/PR |
 | Schema versioning | `CREATE TABLE IF NOT EXISTS` only — no migration path |
 | Crash/error reporting | None |
 
@@ -156,9 +156,12 @@ still works offline and feels instant.
 
 ### Phase 0 — Foundations (1–2 weeks)
 *Do these first; they're cheap and unblock everything else.*
-- [ ] Add ESLint + Prettier + `tsc --noEmit`; wire into a GitHub Actions CI job.
-- [ ] Add a unit-test harness (Jest + `@testing-library/react-native`). Start with
+- [x] Add ESLint + Prettier + `tsc --noEmit`; wire into a GitHub Actions CI job.
+      (`eslint.config.js`, `.prettierrc`, `tsc --noEmit` via `npm run typecheck`,
+      `.github/workflows/ci.yml`)
+- [x] Add a unit-test harness (Jest + `@testing-library/react-native`). Start with
       `placeValidation.ts` and `placeRepository.ts`.
+      (`jest.config.js` + tests in `src/places/`)
 - [x] Introduce schema **migrations** keyed off `PRAGMA user_version`.
       (`src/database/migrations.ts` + `src/database/database.ts`)
 - [x] Switch IDs to UUID v4 (`expo-crypto`). (`createLocalId` in `placeRepository.ts`)

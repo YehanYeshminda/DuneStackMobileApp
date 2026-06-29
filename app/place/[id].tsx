@@ -39,14 +39,18 @@ export default function PlaceDetailScreen(): ReactElement {
       return;
     }
 
-    Alert.alert('Delete place?', 'This removes the local record and its saved photo from this app.', [
-      { style: 'cancel', text: 'Cancel' },
-      {
-        onPress: deleteCurrentPlace,
-        style: 'destructive',
-        text: 'Delete',
-      },
-    ]);
+    Alert.alert(
+      'Delete place?',
+      'This removes the local record and its saved photo from this app.',
+      [
+        { style: 'cancel', text: 'Cancel' },
+        {
+          onPress: deleteCurrentPlace,
+          style: 'destructive',
+          text: 'Delete',
+        },
+      ],
+    );
   };
 
   const deleteCurrentPlace = async (): Promise<void> => {
@@ -59,7 +63,10 @@ export default function PlaceDetailScreen(): ReactElement {
       await deleteLocalImage(place.photoUri);
       router.replace('/');
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unknown error occurred while deleting this place.';
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while deleting this place.';
       Alert.alert('Could not delete place', message);
     }
   };
@@ -84,18 +91,32 @@ export default function PlaceDetailScreen(): ReactElement {
 
       <Section title="Notes" value={place.notes.length > 0 ? place.notes : 'No notes saved.'} />
       <Section title="Tags" value={place.tags.length > 0 ? place.tags : 'No tags saved.'} />
-      <Section title="Address Label" value={place.addressLabel.length > 0 ? place.addressLabel : 'No manual label saved.'} />
-      <Section title="Rating" value={place.rating === null ? 'No rating saved.' : `${place.rating} / 5`} />
+      <Section
+        title="Address Label"
+        value={place.addressLabel.length > 0 ? place.addressLabel : 'No manual label saved.'}
+      />
+      <Section
+        title="Rating"
+        value={place.rating === null ? 'No rating saved.' : `${place.rating} / 5`}
+      />
 
       <View style={styles.actions}>
-        <Pressable onPress={(): void => router.push(`/place/edit/${place.id}`)} style={styles.secondaryButton}>
+        <Pressable
+          onPress={(): void => router.push(`/place/edit/${place.id}`)}
+          style={styles.secondaryButton}
+        >
           <Text style={styles.secondaryButtonText}>Edit Place</Text>
         </Pressable>
-        <Pressable onPress={(): void => router.push(`/map/${place.id}`)} style={styles.secondaryButton}>
+        <Pressable
+          onPress={(): void => router.push(`/map/${place.id}`)}
+          style={styles.secondaryButton}
+        >
           <Text style={styles.secondaryButtonText}>View Saved Position</Text>
         </Pressable>
         <Pressable onPress={toggleFavorite} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>{place.isFavorite ? 'Remove Favorite' : 'Mark Favorite'}</Text>
+          <Text style={styles.primaryButtonText}>
+            {place.isFavorite ? 'Remove Favorite' : 'Mark Favorite'}
+          </Text>
         </Pressable>
         <Pressable onPress={confirmDelete} style={styles.dangerButton}>
           <Text style={styles.dangerButtonText}>Delete</Text>
