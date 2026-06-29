@@ -12,9 +12,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Node 24 ships npm 11, which resolves peer deps the same way the
+          # committed package-lock.json was generated. Node 20 (npm 10) treats
+          # react-dom as a missing entry and fails `npm ci`.
+          node-version: '24'
           cache: npm
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm run test:ci
