@@ -182,9 +182,15 @@ still works offline and feels instant.
 > new dependencies; revisit zipping if backup size becomes a concern.
 
 ### Phase 2 — Identity & backend (3–5 weeks)
+> **Scope decision (2026-06-29): individual users only for now.** Team/org
+> multi-tenancy and SSO are deferred until the product targets teams. For
+> individuals this phase means an optional personal account + personal cloud
+> backup so they can restore on a new device — not multi-tenancy.
 - [ ] Stand up backend (Auth + Postgres + object storage).
-- [ ] Add org/team/user model with Row-Level Security.
-- [ ] Add SSO/OIDC (the typical enterprise gate).
+- [ ] Optional personal account (email/passwordless) tied to one user's data.
+- [ ] Per-user cloud backup/restore (extends the Phase 1 backup format).
+- [ ] ~~Org/team/user model with Row-Level Security~~ — deferred (teams only).
+- [ ] ~~SSO/OIDC~~ — deferred (enterprise/teams only).
 
 ### Phase 3 — Sync engine (3–5 weeks)
 - [ ] Outbound queue + pull/merge with last-write-wins + tombstones.
