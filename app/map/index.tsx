@@ -1,18 +1,16 @@
-import { AppleMaps, GoogleMaps } from 'expo-maps';
 import { router, useFocusEffect } from 'expo-router';
-import { ReactElement, useCallback, useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { lazy, ReactElement, Suspense, useCallback, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { getCategoryLabel } from '../../src/categories/categories';
+import { isMapsSupported } from '../../src/maps/mapsSupport';
 import { useIsOnline } from '../../src/network/useIsOnline';
 import { listPlaces } from '../../src/places/placeRepository';
 import { PlaceRecord } from '../../src/places/placeTypes';
 import { colors, spacing } from '../../src/shared/theme';
 
-type MapCoordinates = {
-  readonly latitude: number;
-  readonly longitude: number;
-};
+// Lazily loaded so the expo-maps native module is never required at app
+// startup — only when this screen actually renders the map.
+const PlacesMapCanvas = lazy(() => import('../../src/maps/PlacesMapCanvas'));
 
 export default function PlacesMapScreen(): ReactElement {
   const [places, setPlaces] = useState<PlaceRecord[]>([]);
@@ -32,95 +30,59 @@ export default function PlacesMapScreen(): ReactElement {
     router.push(`/place/${id}`);
   }, []);
 
+  if (!isMapsSupported()) {
+    return (
+      <MapMessage
+        body="The map needs the full app build and isn't available in Expo Go."
+        title="Map isn't available here"
+      />
+    );
+  }
+
   if (!isOnline) {
     return (
-      <View style={styles.messageScreen}>
-        <Text style={styles.messageTitle}>Map needs an internet connection</Text>
-        <Text style={styles.messageBody}>Reconnect to view your places on the map.</Text>
-      </View>
+      <MapMessage
+        body="Reconnect to view your places on the map."
+        title="Map needs an internet connection"
+      />
     );
   }
 
   if (places.length === 0) {
     return (
-      <View style={styles.messageScreen}>
-        <Text style={styles.messageTitle}>No places to map yet</Text>
-        <Text style={styles.messageBody}>
-          Save a place with a photo and it will appear here on the map.
-        </Text>
-      </View>
-    );
-  }
-
-  const cameraPosition = {
-    coordinates: getCenter(places),
-    zoom: 11,
-  };
-
-  if (Platform.OS === 'ios') {
-    return (
-      <AppleMaps.View
-        cameraPosition={cameraPosition}
-        markers={places.map(toAppleMarker)}
-        onMarkerClick={(marker: AppleMaps.Marker): void => openPlace(marker.id)}
-        style={styles.map}
-      />
-    );
-  }
-
-  if (Platform.OS === 'android') {
-    return (
-      <GoogleMaps.View
-        cameraPosition={cameraPosition}
-        markers={places.map(toGoogleMarker)}
-        onMarkerClick={(marker: GoogleMaps.Marker): void => openPlace(marker.id)}
-        style={styles.map}
+      <MapMessage
+        body="Save a place with a photo and it will appear here on the map."
+        title="No places to map yet"
       />
     );
   }
 
   return (
-    <View style={styles.messageScreen}>
-      <Text style={styles.messageTitle}>Map unavailable here</Text>
-      <Text style={styles.messageBody}>Open the map from the iOS or Android app.</Text>
-    </View>
+    <Suspense
+      fallback={
+        <View style={styles.messageScreen}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      }
+    >
+      <PlacesMapCanvas onMarkerPress={openPlace} places={places} />
+    </Suspense>
   );
 }
 
-const toAppleMarker = (place: PlaceRecord): AppleMaps.Marker => ({
-  coordinates: { latitude: place.latitude, longitude: place.longitude },
-  id: place.id,
-  systemImage: 'mappin.circle.fill',
-  tintColor: colors.primary,
-  title: place.title,
-});
-
-const toGoogleMarker = (place: PlaceRecord): GoogleMaps.Marker => ({
-  coordinates: { latitude: place.latitude, longitude: place.longitude },
-  id: place.id,
-  snippet: getCategoryLabel(place.categoryId),
-  title: place.title,
-});
-
-const getCenter = (places: PlaceRecord[]): MapCoordinates => {
-  const total = places.reduce(
-    (accumulator: MapCoordinates, place: PlaceRecord): MapCoordinates => ({
-      latitude: accumulator.latitude + place.latitude,
-      longitude: accumulator.longitude + place.longitude,
-    }),
-    { latitude: 0, longitude: 0 },
-  );
-
-  return {
-    latitude: total.latitude / places.length,
-    longitude: total.longitude / places.length,
-  };
+type MapMessageProps = {
+  readonly body: string;
+  readonly title: string;
 };
 
+const MapMessage = ({ body, title }: MapMessageProps): ReactElement => (
+  <View style={styles.messageScreen}>
+    <Text style={styles.messageTitle}>{title}</Text>
+    <Text style={styles.messageBody}>{body}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
-  map: {
-    flex: 1,
-  },
   messageBody: {
     color: colors.muted,
     fontSize: 16,
