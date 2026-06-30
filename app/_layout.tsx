@@ -23,10 +23,12 @@ export default function RootLayout(): ReactElement {
           headerTitleStyle: { fontWeight: '700' },
         }}
       >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="capture" options={{ title: 'Save a Place' }} />
         <Stack.Screen name="gallery" options={{ title: 'Place Gallery' }} />
+        <Stack.Screen name="map/index" options={{ title: 'Places Map' }} />
         <Stack.Screen name="map/[id]" options={{ title: 'Saved Position' }} />
+        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="place/edit/[id]" options={{ title: 'Edit Place' }} />
         <Stack.Screen name="place/[id]" options={{ title: 'Place Details' }} />
       </Stack>

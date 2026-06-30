@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export type AppColors = {
   readonly accent: string;
   readonly background: string;
@@ -17,15 +19,19 @@ export type AppSpacing = {
   readonly xl: number;
 };
 
+export type AppFonts = {
+  readonly serif: string;
+};
+
 export const colors: AppColors = {
-  accent: '#2C7A7B',
-  background: '#F4F7FA',
-  border: '#DCE4EC',
-  danger: '#C0392B',
-  muted: '#5C6B7A',
-  primary: '#1F3A5F',
+  accent: '#C2703D',
+  background: '#F4EFE6',
+  border: '#E6DDCE',
+  danger: '#B23A3A',
+  muted: '#8C8073',
+  primary: '#2A2521',
   surface: '#FFFFFF',
-  text: '#16202B',
+  text: '#2A2521',
 };
 
 export const spacing: AppSpacing = {
@@ -34,4 +40,8 @@ export const spacing: AppSpacing = {
   md: 16,
   lg: 24,
   xl: 36,
+};
+
+export const fonts: AppFonts = {
+  serif: Platform.select({ android: 'serif', default: 'Georgia', ios: 'Georgia' }),
 };

@@ -1,7 +1,6 @@
 import { useFocusEffect } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AppPermissions,
@@ -9,11 +8,10 @@ import {
   readAppPermissions,
   requestCameraPermission,
   requestLocationPermission,
-} from '../../src/privacy/permissionStatus';
-import { colors, spacing } from '../../src/shared/theme';
+} from '../src/privacy/permissionStatus';
+import { colors, spacing } from '../src/shared/theme';
 
 export default function SettingsScreen(): ReactElement {
-  const insets = useSafeAreaInsets();
   const [permissions, setPermissions] = useState<AppPermissions | null>(null);
 
   const loadPermissions = useCallback((): void => {
@@ -55,14 +53,10 @@ export default function SettingsScreen(): ReactElement {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
-      style={styles.screen}
-    >
-      <Text style={styles.eyebrow}>App</Text>
-      <Text style={styles.heading}>Settings</Text>
+    <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
       <Text style={styles.body}>
-        DuneStack Places does not use login, cloud sync, analytics, or remote uploads in this MVP.
+        DuneStack Places keeps everything on this device — no login, cloud sync, analytics, or
+        remote uploads.
       </Text>
 
       <PermissionCard
@@ -74,7 +68,7 @@ export default function SettingsScreen(): ReactElement {
       />
 
       <PermissionCard
-        body="Requested while saving a place. No background tracking is implemented."
+        body="Optional — added to a place when available. No background tracking."
         onOpenSettings={openDeviceSettings}
         onRequest={requestLocation}
         permission={permissions?.location ?? null}
@@ -195,19 +189,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
-    paddingBottom: spacing.xl,
-  },
-  eyebrow: {
-    color: colors.muted,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  heading: {
-    color: colors.text,
-    fontSize: 30,
-    fontWeight: '800',
-    lineHeight: 34,
-    marginBottom: spacing.sm,
   },
   permissionButton: {
     alignItems: 'center',
