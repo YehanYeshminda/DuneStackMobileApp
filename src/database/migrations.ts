@@ -57,6 +57,47 @@ export const migrations: readonly Migration[] = [
       seedDefaultCategories(database);
     },
   },
+  {
+    version: 2,
+    up: (database: SQLite.SQLiteDatabase): void => {
+      // Make latitude/longitude nullable so a place can be saved without a GPS
+      // fix. SQLite can't drop NOT NULL in place, so rebuild the table.
+      database.execSync(`
+        CREATE TABLE places_new (
+          id TEXT PRIMARY KEY NOT NULL,
+          title TEXT NOT NULL,
+          category_id TEXT NOT NULL,
+          photo_uri TEXT NOT NULL,
+          latitude REAL,
+          longitude REAL,
+          location_accuracy_meters REAL,
+          captured_at TEXT NOT NULL,
+          notes TEXT NOT NULL,
+          tags TEXT NOT NULL,
+          rating INTEGER,
+          is_favorite INTEGER NOT NULL,
+          address_label TEXT NOT NULL,
+          visit_date TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (category_id) REFERENCES categories (id)
+        );
+
+        INSERT INTO places_new
+          SELECT id, title, category_id, photo_uri, latitude, longitude,
+                 location_accuracy_meters, captured_at, notes, tags, rating,
+                 is_favorite, address_label, visit_date, created_at, updated_at
+          FROM places;
+
+        DROP TABLE places;
+        ALTER TABLE places_new RENAME TO places;
+
+        CREATE INDEX IF NOT EXISTS idx_places_category_id ON places (category_id);
+        CREATE INDEX IF NOT EXISTS idx_places_created_at ON places (created_at);
+        CREATE INDEX IF NOT EXISTS idx_places_is_favorite ON places (is_favorite);
+      `);
+    },
+  },
 ];
 
 const seedDefaultCategories = (database: SQLite.SQLiteDatabase): void => {

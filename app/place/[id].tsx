@@ -107,12 +107,14 @@ export default function PlaceDetailScreen(): ReactElement {
         >
           <Text style={styles.secondaryButtonText}>Edit Place</Text>
         </Pressable>
-        <Pressable
-          onPress={(): void => router.push(`/map/${place.id}`)}
-          style={styles.secondaryButton}
-        >
-          <Text style={styles.secondaryButtonText}>View Saved Position</Text>
-        </Pressable>
+        {place.latitude !== null && place.longitude !== null ? (
+          <Pressable
+            onPress={(): void => router.push(`/map/${place.id}`)}
+            style={styles.secondaryButton}
+          >
+            <Text style={styles.secondaryButtonText}>View Saved Position</Text>
+          </Pressable>
+        ) : null}
         <Pressable onPress={toggleFavorite} style={styles.primaryButton}>
           <Text style={styles.primaryButtonText}>
             {place.isFavorite ? 'Remove Favorite' : 'Mark Favorite'}

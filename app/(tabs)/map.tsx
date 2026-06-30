@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { isMapsSupported } from '../../src/maps/mapsSupport';
 import { useIsOnline } from '../../src/network/useIsOnline';
 import { listPlaces } from '../../src/places/placeRepository';
-import { PlaceRecord } from '../../src/places/placeTypes';
+import { hasCoordinates, PlaceRecord } from '../../src/places/placeTypes';
 import { colors, spacing } from '../../src/shared/theme';
 
 // Lazily loaded so the expo-maps native module is never required at app
@@ -30,6 +30,8 @@ export default function PlacesMapScreen(): ReactElement {
     router.push(`/place/${id}`);
   }, []);
 
+  const locatedPlaces = places.filter(hasCoordinates);
+
   if (!isMapsSupported()) {
     return (
       <MapMessage
@@ -48,10 +50,10 @@ export default function PlacesMapScreen(): ReactElement {
     );
   }
 
-  if (places.length === 0) {
+  if (locatedPlaces.length === 0) {
     return (
       <MapMessage
-        body="Save a place with a photo and it will appear here on the map."
+        body="Save a place with a location and it will appear here on the map."
         title="No places to map yet"
       />
     );
@@ -65,7 +67,7 @@ export default function PlacesMapScreen(): ReactElement {
         </View>
       }
     >
-      <PlacesMapCanvas onMarkerPress={openPlace} places={places} />
+      <PlacesMapCanvas onMarkerPress={openPlace} places={locatedPlaces} />
     </Suspense>
   );
 }

@@ -147,16 +147,6 @@ export default function CaptureScreen(): ReactElement {
       return;
     }
 
-    if (capturedLocation === null) {
-      Alert.alert(
-        'Location not ready',
-        isLocating
-          ? 'Still getting your location. Try again in a moment.'
-          : 'Tap "Retry location" to add a geotag before saving.',
-      );
-      return;
-    }
-
     if (capturedAt === null) {
       Alert.alert(
         'Capture time required',
@@ -178,9 +168,9 @@ export default function CaptureScreen(): ReactElement {
         addressLabel,
         capturedAt,
         categoryId,
-        latitude: capturedLocation.latitude,
-        locationAccuracyMeters: capturedLocation.accuracyMeters,
-        longitude: capturedLocation.longitude,
+        latitude: capturedLocation?.latitude ?? null,
+        locationAccuracyMeters: capturedLocation?.accuracyMeters ?? null,
+        longitude: capturedLocation?.longitude ?? null,
         notes,
         photoUri: savedPhotoUri,
         rating: parsePlaceRating(ratingText),
@@ -358,7 +348,7 @@ const LocationStatus = ({
   if (errorMessage !== null) {
     return (
       <View style={styles.locationCard}>
-        <Text style={styles.locationErrorText}>{errorMessage}</Text>
+        <Text style={styles.locationErrorText}>{errorMessage} You can still save without it.</Text>
         <Pressable onPress={onRetry} style={styles.locationButton}>
           <Text style={styles.locationButtonText}>Retry location</Text>
         </Pressable>
@@ -376,7 +366,7 @@ const LocationStatus = ({
 
   return (
     <View style={styles.locationCard}>
-      <Text style={styles.locationText}>No location yet.</Text>
+      <Text style={styles.locationText}>No location yet (optional).</Text>
       <Pressable onPress={onRetry} style={styles.locationButton}>
         <Text style={styles.locationButtonText}>Add location</Text>
       </Pressable>

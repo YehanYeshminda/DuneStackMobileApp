@@ -5,9 +5,9 @@ export type PlaceRecord = {
   readonly createdAt: string;
   readonly id: string;
   readonly isFavorite: boolean;
-  readonly latitude: number;
+  readonly latitude: number | null;
   readonly locationAccuracyMeters: number | null;
-  readonly longitude: number;
+  readonly longitude: number | null;
   readonly notes: string;
   readonly photoUri: string;
   readonly rating: number | null;
@@ -21,9 +21,9 @@ export type CreatePlaceInput = {
   readonly addressLabel: string;
   readonly categoryId: string;
   readonly capturedAt: string;
-  readonly latitude: number;
+  readonly latitude: number | null;
   readonly locationAccuracyMeters: number | null;
-  readonly longitude: number;
+  readonly longitude: number | null;
   readonly notes: string;
   readonly photoUri: string;
   readonly rating: number | null;
@@ -36,9 +36,9 @@ export type UpdatePlaceInput = {
   readonly addressLabel: string;
   readonly capturedAt: string;
   readonly categoryId: string;
-  readonly latitude: number;
+  readonly latitude: number | null;
   readonly locationAccuracyMeters: number | null;
-  readonly longitude: number;
+  readonly longitude: number | null;
   readonly notes: string;
   readonly photoUri: string;
   readonly rating: number | null;
@@ -54,9 +54,9 @@ export type PlaceRow = {
   readonly created_at: string;
   readonly id: string;
   readonly is_favorite: number;
-  readonly latitude: number;
+  readonly latitude: number | null;
   readonly location_accuracy_meters: number | null;
-  readonly longitude: number;
+  readonly longitude: number | null;
   readonly notes: string;
   readonly photo_uri: string;
   readonly rating: number | null;
@@ -65,3 +65,12 @@ export type PlaceRow = {
   readonly updated_at: string;
   readonly visit_date: string;
 };
+
+/** A place that has a saved GPS coordinate (e.g. for the map). */
+export type LocatedPlace = PlaceRecord & {
+  readonly latitude: number;
+  readonly longitude: number;
+};
+
+export const hasCoordinates = (place: PlaceRecord): place is LocatedPlace =>
+  place.latitude !== null && place.longitude !== null;

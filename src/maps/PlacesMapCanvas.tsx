@@ -3,12 +3,12 @@ import { ReactElement } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { getCategoryLabel } from '../categories/categories';
-import { PlaceRecord } from '../places/placeTypes';
+import { LocatedPlace } from '../places/placeTypes';
 import { colors, spacing } from '../shared/theme';
 
 type PlacesMapCanvasProps = {
   readonly onMarkerPress: (id: string | undefined) => void;
-  readonly places: PlaceRecord[];
+  readonly places: LocatedPlace[];
 };
 
 type MapCoordinates = {
@@ -61,7 +61,7 @@ export default function PlacesMapCanvas({
   );
 }
 
-const toAppleMarker = (place: PlaceRecord): AppleMaps.Marker => ({
+const toAppleMarker = (place: LocatedPlace): AppleMaps.Marker => ({
   coordinates: { latitude: place.latitude, longitude: place.longitude },
   id: place.id,
   systemImage: 'mappin.circle.fill',
@@ -69,16 +69,16 @@ const toAppleMarker = (place: PlaceRecord): AppleMaps.Marker => ({
   title: place.title,
 });
 
-const toGoogleMarker = (place: PlaceRecord): GoogleMaps.Marker => ({
+const toGoogleMarker = (place: LocatedPlace): GoogleMaps.Marker => ({
   coordinates: { latitude: place.latitude, longitude: place.longitude },
   id: place.id,
   snippet: getCategoryLabel(place.categoryId),
   title: place.title,
 });
 
-const getCenter = (places: PlaceRecord[]): MapCoordinates => {
+const getCenter = (places: LocatedPlace[]): MapCoordinates => {
   const total = places.reduce(
-    (accumulator: MapCoordinates, place: PlaceRecord): MapCoordinates => ({
+    (accumulator: MapCoordinates, place: LocatedPlace): MapCoordinates => ({
       latitude: accumulator.latitude + place.latitude,
       longitude: accumulator.longitude + place.longitude,
     }),
