@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   AppPermissions,
@@ -8,10 +9,11 @@ import {
   readAppPermissions,
   requestCameraPermission,
   requestLocationPermission,
-} from '../src/privacy/permissionStatus';
-import { colors, spacing } from '../src/shared/theme';
+} from '../../src/privacy/permissionStatus';
+import { colors, spacing } from '../../src/shared/theme';
 
 export default function SettingsScreen(): ReactElement {
+  const insets = useSafeAreaInsets();
   const [permissions, setPermissions] = useState<AppPermissions | null>(null);
 
   const loadPermissions = useCallback((): void => {
@@ -53,8 +55,12 @@ export default function SettingsScreen(): ReactElement {
   };
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Local-only by design</Text>
+    <ScrollView
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.sm }]}
+      style={styles.screen}
+    >
+      <Text style={styles.eyebrow}>App</Text>
+      <Text style={styles.heading}>Settings</Text>
       <Text style={styles.body}>
         DuneStack Places does not use login, cloud sync, analytics, or remote uploads in this MVP.
       </Text>
@@ -81,7 +87,7 @@ export default function SettingsScreen(): ReactElement {
           Manual export and import are planned next, keeping control in the user&apos;s hands.
         </Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -187,6 +193,22 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
   },
+  content: {
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+  },
+  eyebrow: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  heading: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: '800',
+    lineHeight: 34,
+    marginBottom: spacing.sm,
+  },
   permissionButton: {
     alignItems: 'center',
     backgroundColor: colors.primary,
@@ -207,12 +229,5 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.background,
     flex: 1,
-    padding: spacing.lg,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: spacing.sm,
   },
 });

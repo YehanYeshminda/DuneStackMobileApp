@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ReactElement, useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { initializeDatabase } from '../src/database/database';
 import { colors } from '../src/shared/theme';
@@ -11,7 +12,7 @@ export default function RootLayout(): ReactElement {
   }, []);
 
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -22,16 +23,13 @@ export default function RootLayout(): ReactElement {
           headerTitleStyle: { fontWeight: '700' },
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'DuneStack Places' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="capture" options={{ title: 'Save a Place' }} />
         <Stack.Screen name="gallery" options={{ title: 'Place Gallery' }} />
-        <Stack.Screen name="timeline" options={{ title: 'Timeline' }} />
-        <Stack.Screen name="map/index" options={{ title: 'Places Map' }} />
         <Stack.Screen name="map/[id]" options={{ title: 'Saved Position' }} />
-        <Stack.Screen name="settings" options={{ title: 'Privacy & Backups' }} />
         <Stack.Screen name="place/edit/[id]" options={{ title: 'Edit Place' }} />
         <Stack.Screen name="place/[id]" options={{ title: 'Place Details' }} />
       </Stack>
-    </>
+    </SafeAreaProvider>
   );
 }

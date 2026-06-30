@@ -1,14 +1,16 @@
 import { Link, useFocusEffect } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
 import { Image, Pressable, SectionList, SectionListData, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getCategoryLabel } from '../src/categories/categories';
-import { listPlaces } from '../src/places/placeRepository';
-import { groupPlacesByMonth, PlaceSection } from '../src/places/placeTimeline';
-import { PlaceRecord } from '../src/places/placeTypes';
-import { colors, spacing } from '../src/shared/theme';
+import { getCategoryLabel } from '../../src/categories/categories';
+import { listPlaces } from '../../src/places/placeRepository';
+import { groupPlacesByMonth, PlaceSection } from '../../src/places/placeTimeline';
+import { PlaceRecord } from '../../src/places/placeTypes';
+import { colors, spacing } from '../../src/shared/theme';
 
 export default function TimelineScreen(): ReactElement {
+  const insets = useSafeAreaInsets();
   const [sections, setSections] = useState<PlaceSection[]>([]);
 
   useFocusEffect(
@@ -18,7 +20,10 @@ export default function TimelineScreen(): ReactElement {
   );
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}>
+      <Text style={styles.eyebrow}>Your</Text>
+      <Text style={styles.heading}>Timeline</Text>
+
       <SectionList
         contentContainerStyle={styles.listContent}
         keyExtractor={(item: PlaceRecord): string => item.id}
@@ -48,6 +53,7 @@ export default function TimelineScreen(): ReactElement {
           </View>
         )}
         sections={sections}
+        showsVerticalScrollIndicator={false}
         stickySectionHeadersEnabled={false}
       />
     </View>
@@ -61,11 +67,22 @@ const styles = StyleSheet.create({
   empty: {
     color: colors.muted,
     fontSize: 16,
-    padding: spacing.lg,
+    paddingVertical: spacing.xl,
     textAlign: 'center',
   },
+  eyebrow: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  heading: {
+    color: colors.text,
+    fontSize: 30,
+    fontWeight: '800',
+    lineHeight: 34,
+    marginBottom: spacing.sm,
+  },
   listContent: {
-    padding: spacing.lg,
     paddingBottom: spacing.xl,
   },
   row: {
@@ -100,6 +117,7 @@ const styles = StyleSheet.create({
   screen: {
     backgroundColor: colors.background,
     flex: 1,
+    paddingHorizontal: spacing.lg,
   },
   sectionCount: {
     color: colors.muted,
