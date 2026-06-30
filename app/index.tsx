@@ -43,15 +43,23 @@ export default function HomeScreen(): ReactElement {
             <Text style={styles.primaryButtonText}>Add Place</Text>
           </Pressable>
         </Link>
+      </View>
+
+      <View style={styles.navRow}>
         {showMap ? (
           <Link asChild href="/map">
-            <Pressable style={styles.secondaryButton}>
+            <Pressable style={[styles.secondaryButton, styles.navButton]}>
               <Text style={styles.secondaryButtonText}>Map</Text>
             </Pressable>
           </Link>
         ) : null}
+        <Link asChild href="/timeline">
+          <Pressable style={[styles.secondaryButton, styles.navButton]}>
+            <Text style={styles.secondaryButtonText}>Timeline</Text>
+          </Pressable>
+        </Link>
         <Link asChild href="/gallery">
-          <Pressable style={styles.secondaryButton}>
+          <Pressable style={[styles.secondaryButton, styles.navButton]}>
             <Text style={styles.secondaryButtonText}>Gallery</Text>
           </Pressable>
         </Link>
@@ -148,7 +156,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   card: {
     backgroundColor: colors.border,
@@ -234,6 +242,14 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+  },
+  navButton: {
+    flex: 1,
+  },
+  navRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
   },
   primaryButton: {
     alignItems: 'center',
