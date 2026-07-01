@@ -58,10 +58,14 @@ export default function PlaceDetailScreen(): ReactElement {
       return;
     }
 
-    Alert.alert('Delete place?', 'This removes the local record and its saved photo from this app.', [
-      { style: 'cancel', text: 'Cancel' },
-      { onPress: deleteCurrentPlace, style: 'destructive', text: 'Delete' },
-    ]);
+    Alert.alert(
+      'Delete place?',
+      'This removes the local record and its saved photo from this app.',
+      [
+        { style: 'cancel', text: 'Cancel' },
+        { onPress: deleteCurrentPlace, style: 'destructive', text: 'Delete' },
+      ],
+    );
   };
 
   const deleteCurrentPlace = async (): Promise<void> => {
@@ -75,7 +79,9 @@ export default function PlaceDetailScreen(): ReactElement {
       router.replace('/');
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : 'An unknown error occurred while deleting this place.';
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while deleting this place.';
       Alert.alert('Could not delete place', message);
     }
   };
@@ -95,16 +101,32 @@ export default function PlaceDetailScreen(): ReactElement {
     <View style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}>
       <View style={styles.header}>
         <View style={styles.headerSide}>
-          <Pressable accessibilityLabel="Go back" accessibilityRole="button" onPress={(): void => router.back()} style={styles.iconButton}>
+          <Pressable
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+            onPress={(): void => router.back()}
+            style={styles.iconButton}
+          >
             <Ionicons color={colors.text} name="chevron-back" size={20} />
           </Pressable>
-          <Text numberOfLines={1} style={[styles.headerCategory, { color: getCategoryColor(place.categoryId) }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.headerCategory, { color: getCategoryColor(place.categoryId) }]}
+          >
             {getCategoryLabel(place.categoryId).toUpperCase()}
           </Text>
         </View>
         <View style={styles.headerSide}>
-          <Pressable accessibilityLabel="Toggle favorite" accessibilityRole="button" onPress={toggleFavorite}>
-            <Ionicons color={colors.accent} name={place.isFavorite ? 'heart' : 'heart-outline'} size={22} />
+          <Pressable
+            accessibilityLabel="Toggle favorite"
+            accessibilityRole="button"
+            onPress={toggleFavorite}
+          >
+            <Ionicons
+              color={colors.accent}
+              name={place.isFavorite ? 'heart' : 'heart-outline'}
+              size={22}
+            />
           </Pressable>
           <Pressable onPress={(): void => router.push(`/place/edit/${place.id}`)}>
             <Text style={styles.editText}>Edit</Text>
