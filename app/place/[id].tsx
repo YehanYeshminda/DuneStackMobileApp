@@ -1,18 +1,23 @@
+import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getCategoryLabel } from '../../src/categories/categories';
+import { getCategoryColor, getCategoryLabel } from '../../src/categories/categories';
 import { deleteLocalImage } from '../../src/files/localImages';
+import { getCurrentMapsUrl } from '../../src/location/externalMaps';
 import { deletePlace, getPlaceById, setPlaceFavorite } from '../../src/places/placeRepository';
 import { PlaceRecord } from '../../src/places/placeTypes';
-import { colors, spacing } from '../../src/shared/theme';
+import { colors, fonts, spacing } from '../../src/shared/theme';
 
 type RouteParams = {
   readonly id?: string;
 };
 
 export default function PlaceDetailScreen(): ReactElement {
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<RouteParams>();
   const [place, setPlace] = useState<PlaceRecord | null>(null);
 
@@ -34,23 +39,29 @@ export default function PlaceDetailScreen(): ReactElement {
     setPlace(setPlaceFavorite(place.id, !place.isFavorite));
   };
 
+  const openExternalMaps = async (): Promise<void> => {
+    if (place === null || place.latitude === null || place.longitude === null) {
+      return;
+    }
+
+    try {
+      await Linking.openURL(getCurrentMapsUrl(place));
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'The device could not open the location.';
+      Alert.alert('Could not open maps', message);
+    }
+  };
+
   const confirmDelete = (): void => {
     if (place === null) {
       return;
     }
 
-    Alert.alert(
-      'Delete place?',
-      'This removes the local record and its saved photo from this app.',
-      [
-        { style: 'cancel', text: 'Cancel' },
-        {
-          onPress: deleteCurrentPlace,
-          style: 'destructive',
-          text: 'Delete',
-        },
-      ],
-    );
+    Alert.alert('Delete place?', 'This removes the local record and its saved photo from this app.', [
+      { style: 'cancel', text: 'Cancel' },
+      { onPress: deleteCurrentPlace, style: 'destructive', text: 'Delete' },
+    ]);
   };
 
   const deleteCurrentPlace = async (): Promise<void> => {
@@ -64,208 +75,279 @@ export default function PlaceDetailScreen(): ReactElement {
       router.replace('/');
     } catch (error: unknown) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'An unknown error occurred while deleting this place.';
+        error instanceof Error ? error.message : 'An unknown error occurred while deleting this place.';
       Alert.alert('Could not delete place', message);
     }
   };
 
   if (place === null) {
     return (
-      <View style={styles.screen}>
-        <Text style={styles.body}>Loading place...</Text>
+      <View style={[styles.screen, styles.loading, { paddingTop: insets.top + spacing.xl }]}>
+        <Text style={styles.mutedText}>Loading place...</Text>
       </View>
     );
   }
 
+  const tags = parseTags(place.tags);
+  const hasLocation = place.latitude !== null && place.longitude !== null;
+
   return (
-    <ScrollView contentContainerStyle={styles.content} style={styles.screen}>
-      <Image source={{ uri: place.photoUri }} style={styles.image} />
-      <Text style={styles.category}>{getCategoryLabel(place.categoryId)}</Text>
-      <Text style={styles.title}>{place.title}</Text>
-
-      <View style={styles.metaGrid}>
-        <InfoCard label="Captured" value={new Date(place.capturedAt).toLocaleString()} />
-      </View>
-
-      <Section title="Notes" value={place.notes.length > 0 ? place.notes : 'No notes saved.'} />
-      <Section title="Tags" value={place.tags.length > 0 ? place.tags : 'No tags saved.'} />
-      <Section
-        title="Address Label"
-        value={place.addressLabel.length > 0 ? place.addressLabel : 'No manual label saved.'}
-      />
-      <Section
-        title="Rating"
-        value={place.rating === null ? 'No rating saved.' : `${place.rating} / 5`}
-      />
-
-      <View style={styles.actions}>
-        <Pressable
-          onPress={(): void => router.push(`/place/edit/${place.id}`)}
-          style={styles.secondaryButton}
-        >
-          <Text style={styles.secondaryButtonText}>Edit Place</Text>
-        </Pressable>
-        {place.latitude !== null && place.longitude !== null ? (
-          <Pressable
-            onPress={(): void => router.push(`/map/${place.id}`)}
-            style={styles.secondaryButton}
-          >
-            <Text style={styles.secondaryButtonText}>View Saved Position</Text>
+    <View style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}>
+      <View style={styles.header}>
+        <View style={styles.headerSide}>
+          <Pressable accessibilityLabel="Go back" accessibilityRole="button" onPress={(): void => router.back()} style={styles.iconButton}>
+            <Ionicons color={colors.text} name="chevron-back" size={20} />
           </Pressable>
-        ) : null}
-        <Pressable onPress={toggleFavorite} style={styles.primaryButton}>
-          <Text style={styles.primaryButtonText}>
-            {place.isFavorite ? 'Remove Favorite' : 'Mark Favorite'}
+          <Text numberOfLines={1} style={[styles.headerCategory, { color: getCategoryColor(place.categoryId) }]}>
+            {getCategoryLabel(place.categoryId).toUpperCase()}
           </Text>
-        </Pressable>
-        <Pressable onPress={confirmDelete} style={styles.dangerButton}>
-          <Text style={styles.dangerButtonText}>Delete</Text>
-        </Pressable>
+        </View>
+        <View style={styles.headerSide}>
+          <Pressable accessibilityLabel="Toggle favorite" accessibilityRole="button" onPress={toggleFavorite}>
+            <Ionicons color={colors.accent} name={place.isFavorite ? 'heart' : 'heart-outline'} size={22} />
+          </Pressable>
+          <Pressable onPress={(): void => router.push(`/place/edit/${place.id}`)}>
+            <Text style={styles.editText}>Edit</Text>
+          </Pressable>
+        </View>
       </View>
-    </ScrollView>
+
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Image source={{ uri: place.photoUri }} style={styles.photo} />
+
+        <Text style={styles.title}>{place.title}</Text>
+
+        <View style={styles.metaRow}>
+          <Stars rating={place.rating} />
+          <Text style={styles.date}>{formatDate(place.capturedAt)}</Text>
+        </View>
+
+        <Text style={styles.sectionLabel}>NOTES</Text>
+        <Text style={styles.notes}>{place.notes.length > 0 ? place.notes : 'No notes yet.'}</Text>
+
+        {tags.length > 0 ? (
+          <View style={styles.tags}>
+            {tags.map((tag: string): ReactElement => (
+              <View key={tag} style={styles.tag}>
+                <Text style={styles.tagText}>#{tag}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {hasLocation || place.addressLabel.length > 0 ? (
+          <View style={styles.locationCard}>
+            <Ionicons color={colors.accent} name="location" size={22} />
+            <View style={styles.locationBody}>
+              <Text style={styles.locationTitle}>
+                {place.addressLabel.length > 0 ? place.addressLabel : 'Saved location'}
+              </Text>
+              {hasLocation ? (
+                <Text style={styles.locationCoords}>
+                  {place.latitude?.toFixed(4)}, {place.longitude?.toFixed(4)}
+                </Text>
+              ) : null}
+            </View>
+            {hasLocation ? (
+              <Pressable
+                onPress={(): void => {
+                  void openExternalMaps();
+                }}
+                style={styles.mapsButton}
+              >
+                <Text style={styles.mapsButtonText}>Open in Maps ›</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
+        <Pressable onPress={confirmDelete} style={styles.deleteButton}>
+          <Text style={styles.deleteText}>Delete place</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
-type InfoCardProps = {
-  readonly label: string;
-  readonly value: string;
+const Stars = ({ rating }: { readonly rating: number | null }): ReactElement => {
+  const filled = rating ?? 0;
+
+  return (
+    <View style={styles.stars}>
+      {[1, 2, 3, 4, 5].map((value: number): ReactElement => (
+        <Ionicons
+          color={value <= filled ? colors.accent : colors.border}
+          key={value}
+          name={value <= filled ? 'star' : 'star-outline'}
+          size={15}
+        />
+      ))}
+    </View>
+  );
 };
 
-const InfoCard = ({ label, value }: InfoCardProps): ReactElement => (
-  <View style={styles.infoCard}>
-    <Text style={styles.infoLabel}>{label}</Text>
-    <Text style={styles.infoValue}>{value}</Text>
-  </View>
-);
+const parseTags = (tags: string): string[] =>
+  tags
+    .split(/[\s,]+/)
+    .map((tag: string): string => tag.trim())
+    .filter((tag: string): boolean => tag.length > 0);
 
-type SectionProps = {
-  readonly title: string;
-  readonly value: string;
-};
-
-const Section = ({ title, value }: SectionProps): ReactElement => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <Text style={styles.body}>{value}</Text>
-  </View>
-);
+const formatDate = (iso: string): string =>
+  new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
 const styles = StyleSheet.create({
-  actions: {
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  body: {
-    color: colors.muted,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  category: {
-    color: colors.accent,
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 1,
-    marginTop: spacing.lg,
-    textTransform: 'uppercase',
-  },
   content: {
-    padding: spacing.lg,
     paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
-  dangerButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.danger,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: spacing.md,
-  },
-  dangerButtonText: {
-    color: colors.danger,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  image: {
-    backgroundColor: colors.border,
-    borderRadius: 26,
-    height: 320,
-    width: '100%',
-  },
-  infoCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 18,
-    borderWidth: 1,
-    flexBasis: '48%',
-    gap: spacing.xs,
-    padding: spacing.md,
-  },
-  infoLabel: {
+  date: {
     color: colors.muted,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontSize: 14,
   },
-  infoValue: {
-    color: colors.text,
+  deleteButton: {
+    alignItems: 'center',
+    marginTop: spacing.xl,
+    padding: spacing.md,
+  },
+  deleteText: {
+    color: colors.danger,
     fontSize: 15,
     fontWeight: '700',
   },
-  metaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginVertical: spacing.lg,
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 18,
-    padding: spacing.md,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
+  editText: {
+    color: colors.text,
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
   },
-  secondaryButton: {
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  headerCategory: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  headerSide: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  iconButton: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  loading: {
+    alignItems: 'center',
+  },
+  locationBody: {
+    flex: 1,
+  },
+  locationCard: {
     alignItems: 'center',
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: 18,
     borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
     padding: spacing.md,
   },
-  secondaryButtonText: {
+  locationCoords: {
+    color: colors.muted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  locationTitle: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  mapsButton: {
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  mapsButtonText: {
+    color: colors.accent,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  metaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  mutedText: {
+    color: colors.muted,
+    fontSize: 16,
+  },
+  notes: {
     color: colors.text,
     fontSize: 16,
-    fontWeight: '800',
+    lineHeight: 24,
+    marginTop: spacing.xs,
+  },
+  photo: {
+    aspectRatio: 4 / 3,
+    backgroundColor: colors.border,
+    borderColor: colors.border,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginTop: spacing.xs,
+    width: '100%',
   },
   screen: {
     backgroundColor: colors.background,
     flex: 1,
   },
-  section: {
+  sectionLabel: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginTop: spacing.lg,
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  tag: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: 22,
+    borderRadius: 999,
     borderWidth: 1,
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
-  sectionTitle: {
+  tagText: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
   title: {
     color: colors.text,
-    fontSize: 34,
-    fontWeight: '800',
-    lineHeight: 40,
-    marginTop: spacing.xs,
+    fontFamily: fonts.serif,
+    fontSize: 28,
+    lineHeight: 34,
+    marginTop: spacing.md,
   },
 });

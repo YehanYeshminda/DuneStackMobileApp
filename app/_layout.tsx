@@ -30,7 +30,7 @@ export default function RootLayout(): ReactElement {
         <Stack.Screen name="map/[id]" options={{ title: 'Saved Position' }} />
         <Stack.Screen name="settings" options={{ title: 'Settings' }} />
         <Stack.Screen name="place/edit/[id]" options={{ title: 'Edit Place' }} />
-        <Stack.Screen name="place/[id]" options={{ title: 'Place Details' }} />
+        <Stack.Screen name="place/[id]" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaProvider>
   );
