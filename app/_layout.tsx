@@ -28,7 +28,7 @@ export default function RootLayout(): ReactElement {
         <Stack.Screen name="gallery" options={{ headerShown: false }} />
         <Stack.Screen name="map/index" options={{ title: 'Explore' }} />
         <Stack.Screen name="map/[id]" options={{ title: 'Saved Position' }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="place/edit/[id]" options={{ title: 'Edit Place' }} />
         <Stack.Screen name="place/[id]" options={{ headerShown: false }} />
       </Stack>

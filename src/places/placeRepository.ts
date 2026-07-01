@@ -101,6 +101,11 @@ export const deletePlace = (id: string): void => {
   );
 };
 
+export const deleteAllPlaces = (): void => {
+  const database = getDatabase();
+  database.runSync(`DELETE FROM places;`);
+};
+
 export const updatePlace = (id: string, input: UpdatePlaceInput): PlaceRecord => {
   const database = getDatabase();
   database.runSync(
