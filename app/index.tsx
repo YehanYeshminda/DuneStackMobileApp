@@ -397,6 +397,7 @@ const OverflowMenu = ({ onClose, showMap, topOffset, visible }: OverflowMenuProp
       <Pressable onPress={onClose} style={styles.menuBackdrop}>
         <View style={[styles.menuCard, { marginTop: topOffset }]}>
           {showMap ? <MenuItem icon="map-outline" label="Explore" onPress={(): void => go('/map')} /> : null}
+          <MenuItem icon="albums-outline" label="Collections" onPress={(): void => go('/collections')} />
           <MenuItem icon="images-outline" label="Gallery" onPress={(): void => go('/gallery')} />
           <MenuItem icon="settings-outline" label="Settings" onPress={(): void => go('/settings')} />
         </View>

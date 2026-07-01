@@ -92,6 +92,7 @@ export const getPlaceById = (id: string): PlaceRecord => {
 
 export const deletePlace = (id: string): void => {
   const database = getDatabase();
+  database.runSync(`DELETE FROM place_collections WHERE place_id = ?;`, id);
   database.runSync(
     `
       DELETE FROM places
@@ -103,6 +104,7 @@ export const deletePlace = (id: string): void => {
 
 export const deleteAllPlaces = (): void => {
   const database = getDatabase();
+  database.runSync(`DELETE FROM place_collections;`);
   database.runSync(`DELETE FROM places;`);
 };
 
@@ -162,7 +164,7 @@ export const setPlaceFavorite = (id: string, isFavorite: boolean): PlaceRecord =
   return getPlaceById(id);
 };
 
-const mapPlaceRow = (row: PlaceRow): PlaceRecord => ({
+export const mapPlaceRow = (row: PlaceRow): PlaceRecord => ({
   addressLabel: row.address_label,
   capturedAt: row.captured_at,
   categoryId: row.category_id,

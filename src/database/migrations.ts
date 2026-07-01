@@ -98,6 +98,31 @@ export const migrations: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 3,
+    up: (database: SQLite.SQLiteDatabase): void => {
+      // Collections: named sets that hand-group places (many-to-many).
+      database.execSync(`
+        CREATE TABLE IF NOT EXISTS collections (
+          id TEXT PRIMARY KEY NOT NULL,
+          name TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS place_collections (
+          collection_id TEXT NOT NULL,
+          place_id TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          PRIMARY KEY (collection_id, place_id),
+          FOREIGN KEY (collection_id) REFERENCES collections (id),
+          FOREIGN KEY (place_id) REFERENCES places (id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_place_collections_place ON place_collections (place_id);
+      `);
+    },
+  },
 ];
 
 const seedDefaultCategories = (database: SQLite.SQLiteDatabase): void => {
