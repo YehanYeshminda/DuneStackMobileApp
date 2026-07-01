@@ -21,6 +21,7 @@ export type CreatePlaceInput = {
   readonly addressLabel: string;
   readonly categoryId: string;
   readonly capturedAt: string;
+  readonly isFavorite: boolean;
   readonly latitude: number | null;
   readonly locationAccuracyMeters: number | null;
   readonly longitude: number | null;

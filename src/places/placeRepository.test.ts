@@ -13,6 +13,7 @@ const buildCreateInput = (overrides: Partial<CreatePlaceInput> = {}): CreatePlac
   addressLabel: 'Downtown',
   capturedAt: '2026-01-01T10:00:00.000Z',
   categoryId: 'food',
+  isFavorite: false,
   latitude: 25.2048,
   locationAccuracyMeters: 5,
   longitude: 55.2708,

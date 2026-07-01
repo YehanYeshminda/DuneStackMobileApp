@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { CameraCapturedPicture, CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import { ReactElement, useEffect, useRef, useState } from 'react';
@@ -8,22 +9,25 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { categories, Category } from '../src/categories/categories';
 import { saveCapturedImage } from '../src/files/localImages';
 import { CapturedLocation, getCurrentPlaceLocation } from '../src/location/currentLocation';
 import { createPlace } from '../src/places/placeRepository';
-import { parsePlaceRating } from '../src/places/placeValidation';
 import { colors, spacing } from '../src/shared/theme';
 
 export default function CaptureScreen(): ReactElement {
+  const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraView>(null);
   const isMountedRef = useRef<boolean>(false);
   const isTakingPhotoRef = useRef<boolean>(false);
+  const hasRequestedLocationRef = useRef<boolean>(false);
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedAt, setCapturedAt] = useState<string | null>(null);
   const [capturedLocation, setCapturedLocation] = useState<CapturedLocation | null>(null);
@@ -31,13 +35,12 @@ export default function CaptureScreen(): ReactElement {
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState<boolean>(false);
   const [isLocating, setIsLocating] = useState<boolean>(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
   const [title, setTitle] = useState<string>('');
   const [categoryId, setCategoryId] = useState<string>('memory');
   const [notes, setNotes] = useState<string>('');
   const [tags, setTags] = useState<string>('');
-  const [addressLabel, setAddressLabel] = useState<string>('');
-  const [ratingText, setRatingText] = useState<string>('');
+  const [rating, setRating] = useState<number | null>(null);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect((): (() => void) => {
@@ -51,27 +54,32 @@ export default function CaptureScreen(): ReactElement {
 
   const fetchCurrentLocation = async (): Promise<void> => {
     setIsLocating(true);
-    setLocationError(null);
 
     try {
       const location = await getCurrentPlaceLocation();
 
-      if (!isMountedRef.current) {
-        return;
+      if (isMountedRef.current) {
+        setCapturedLocation(location);
       }
-
-      setCapturedLocation(location);
-    } catch (error: unknown) {
-      if (!isMountedRef.current) {
-        return;
+    } catch {
+      if (isMountedRef.current) {
+        setCapturedLocation(null);
       }
-
-      const message = error instanceof Error ? error.message : 'Could not get your location.';
-      setLocationError(message);
     } finally {
       if (isMountedRef.current) {
         setIsLocating(false);
       }
+    }
+  };
+
+  const handleCameraReady = (): void => {
+    setIsCameraReady(true);
+
+    // Start locating while the user frames the shot, so the fix is usually
+    // ready by the time they reach the details sheet.
+    if (!hasRequestedLocationRef.current) {
+      hasRequestedLocationRef.current = true;
+      void fetchCurrentLocation();
     }
   };
 
@@ -89,19 +97,8 @@ export default function CaptureScreen(): ReactElement {
       }
     }
 
-    if (!isCameraReady) {
-      Alert.alert(
-        'Camera is still loading',
-        'Wait until the camera preview is ready, then take the photo.',
-      );
-      return;
-    }
-
-    if (cameraRef.current === null) {
-      Alert.alert(
-        'Camera unavailable',
-        'The camera preview is not available. Reopen this screen and try again.',
-      );
+    if (!isCameraReady || cameraRef.current === null) {
+      Alert.alert('Camera is still loading', 'Wait until the preview is ready, then try again.');
       return;
     }
 
@@ -119,18 +116,13 @@ export default function CaptureScreen(): ReactElement {
 
       setCapturedAt(new Date().toISOString());
       setCapturedPhotoUri(photo.uri);
-
-      // Fetch location in the background so the form appears immediately.
-      void fetchCurrentLocation();
     } catch (error: unknown) {
       if (!isMountedRef.current) {
         return;
       }
 
       const message =
-        error instanceof Error
-          ? error.message
-          : 'An unknown error occurred while taking the photo.';
+        error instanceof Error ? error.message : 'An unknown error occurred while taking the photo.';
       Alert.alert('Could not take photo', message);
     } finally {
       isTakingPhotoRef.current = false;
@@ -142,16 +134,8 @@ export default function CaptureScreen(): ReactElement {
   };
 
   const savePlace = async (): Promise<void> => {
-    if (capturedPhotoUri === null) {
+    if (capturedPhotoUri === null || capturedAt === null) {
       Alert.alert('Photo required', 'Take a photo before saving this place.');
-      return;
-    }
-
-    if (capturedAt === null) {
-      Alert.alert(
-        'Capture time required',
-        'Retake the photo so the app can save the capture time with it.',
-      );
       return;
     }
 
@@ -165,15 +149,16 @@ export default function CaptureScreen(): ReactElement {
     try {
       const savedPhotoUri = await saveCapturedImage(capturedPhotoUri);
       const savedPlace = createPlace({
-        addressLabel,
+        addressLabel: '',
         capturedAt,
         categoryId,
+        isFavorite,
         latitude: capturedLocation?.latitude ?? null,
         locationAccuracyMeters: capturedLocation?.accuracyMeters ?? null,
         longitude: capturedLocation?.longitude ?? null,
         notes,
         photoUri: savedPhotoUri,
-        rating: parsePlaceRating(ratingText),
+        rating,
         tags,
         title,
         visitDate: '',
@@ -182,21 +167,11 @@ export default function CaptureScreen(): ReactElement {
       router.replace(`/place/${savedPlace.id}`);
     } catch (error: unknown) {
       const message =
-        error instanceof Error
-          ? error.message
-          : 'An unknown error occurred while saving the place.';
+        error instanceof Error ? error.message : 'An unknown error occurred while saving the place.';
       Alert.alert('Could not save place', message);
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const clearCapturedPhoto = (): void => {
-    setCapturedAt(null);
-    setCapturedPhotoUri(null);
-    setCapturedLocation(null);
-    setLocationError(null);
-    setIsLocating(false);
   };
 
   if (capturedPhotoUri === null) {
@@ -204,26 +179,31 @@ export default function CaptureScreen(): ReactElement {
       <View style={styles.cameraScreen}>
         <CameraView
           facing="back"
-          onCameraReady={(): void => setIsCameraReady(true)}
+          onCameraReady={handleCameraReady}
           onMountError={(): void => setIsCameraReady(false)}
           ref={cameraRef}
-          style={styles.camera}
+          style={StyleSheet.absoluteFill}
         />
-        <View style={styles.cameraOverlay}>
-          <Text style={styles.cameraTitle}>Frame the place</Text>
+        <View style={[styles.cameraTop, { paddingTop: insets.top + spacing.sm }]}>
           <Pressable
+            accessibilityLabel="Close camera"
+            accessibilityRole="button"
+            onPress={(): void => router.back()}
+            style={styles.closeButton}
+          >
+            <Ionicons color="#FFFFFF" name="close" size={22} />
+          </Pressable>
+          <LocationPill dark hasLocation={capturedLocation !== null} isLocating={isLocating} onRetry={fetchCurrentLocation} />
+        </View>
+        <View style={[styles.cameraBottom, { paddingBottom: insets.bottom + spacing.lg }]}>
+          <Pressable
+            accessibilityLabel="Take photo"
+            accessibilityRole="button"
             disabled={isTakingPhoto || !isCameraReady}
             onPress={takePhoto}
-            style={[
-              styles.captureButton,
-              isTakingPhoto || !isCameraReady
-                ? styles.captureButtonDisabled
-                : styles.captureButtonReady,
-            ]}
+            style={styles.shutter}
           >
-            <Text style={styles.captureButtonText}>
-              {isTakingPhoto ? 'Taking Photo...' : 'Take Photo'}
-            </Text>
+            <View style={styles.shutterInner} />
           </Pressable>
         </View>
       </View>
@@ -231,311 +211,317 @@ export default function CaptureScreen(): ReactElement {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.formContent} style={styles.formScreen}>
-      <Image source={{ uri: capturedPhotoUri }} style={styles.previewImage} />
-
-      <LocationStatus
-        errorMessage={locationError}
-        hasLocation={capturedLocation !== null}
-        isLocating={isLocating}
-        onRetry={(): void => {
-          void fetchCurrentLocation();
-        }}
-      />
-
-      <Text style={styles.label}>Title</Text>
-      <TextInput
-        onChangeText={setTitle}
-        placeholder="e.g. Sunset coffee stop"
-        style={styles.input}
-        value={title}
-      />
-
-      <Text style={styles.label}>Category</Text>
-      <View style={styles.categoryGrid}>
-        {categories.map((category: Category): ReactElement => (
-          <Pressable
-            key={category.id}
-            onPress={(): void => setCategoryId(category.id)}
-            style={[
-              styles.categoryPill,
-              categoryId === category.id ? styles.categoryPillActive : styles.categoryPillIdle,
-            ]}
-          >
-            <Text
-              style={
-                categoryId === category.id ? styles.categoryTextActive : styles.categoryTextIdle
-              }
-            >
-              {category.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <Text style={styles.label}>Notes</Text>
-      <TextInput
-        multiline
-        onChangeText={setNotes}
-        placeholder="What should future-you remember?"
-        style={[styles.input, styles.notesInput]}
-        value={notes}
-      />
-
-      <Text style={styles.label}>Tags</Text>
-      <TextInput
-        onChangeText={setTags}
-        placeholder="quiet, client, family..."
-        style={styles.input}
-        value={tags}
-      />
-
-      <Text style={styles.label}>Address Label</Text>
-      <TextInput
-        onChangeText={setAddressLabel}
-        placeholder="Manual label, no online lookup"
-        style={styles.input}
-        value={addressLabel}
-      />
-
-      <Text style={styles.label}>Rating</Text>
-      <TextInput
-        keyboardType="number-pad"
-        onChangeText={setRatingText}
-        placeholder="1 to 5"
-        style={styles.input}
-        value={ratingText}
-      />
-
-      <View style={styles.formActions}>
-        <Pressable onPress={(): void => clearCapturedPhoto()} style={styles.secondaryButton}>
-          <Text style={styles.secondaryButtonText}>Retake</Text>
+    <View style={styles.formScreen}>
+      <View style={[styles.formHeader, { paddingTop: insets.top + spacing.sm }]}>
+        <Pressable onPress={(): void => router.back()}>
+          <Text style={styles.cancelText}>Cancel</Text>
         </Pressable>
-        <Pressable
-          disabled={isSaving || isLocating}
-          onPress={savePlace}
-          style={styles.primaryButton}
-        >
-          <Text style={styles.primaryButtonText}>{isSaving ? 'Saving...' : 'Save Place'}</Text>
+        <Text style={styles.formTitle}>New Place</Text>
+        <Pressable disabled={isSaving} onPress={savePlace}>
+          <Text style={styles.saveText}>{isSaving ? 'Saving…' : 'Save'}</Text>
         </Pressable>
       </View>
-    </ScrollView>
+
+      <ScrollView
+        contentContainerStyle={styles.formContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Image source={{ uri: capturedPhotoUri }} style={styles.photo} />
+
+        <View style={styles.pillRow}>
+          <LocationPill hasLocation={capturedLocation !== null} isLocating={isLocating} onRetry={fetchCurrentLocation} />
+        </View>
+
+        <Text style={styles.label}>TITLE</Text>
+        <TextInput
+          onChangeText={setTitle}
+          placeholder="e.g. Blue Bottle, Hayes"
+          placeholderTextColor={colors.muted}
+          style={styles.input}
+          value={title}
+        />
+
+        <Text style={styles.label}>CATEGORY</Text>
+        <View style={styles.categoryGrid}>
+          {categories.map((category: Category): ReactElement => {
+            const isActive = categoryId === category.id;
+
+            return (
+              <Pressable
+                key={category.id}
+                onPress={(): void => setCategoryId(category.id)}
+                style={[styles.pill, isActive ? styles.pillActive : styles.pillIdle]}
+              >
+                <Text style={isActive ? styles.pillTextActive : styles.pillTextIdle}>
+                  {category.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.label}>RATING</Text>
+        <View style={styles.stars}>
+          {[1, 2, 3, 4, 5].map((value: number): ReactElement => {
+            const isFilled = rating !== null && value <= rating;
+
+            return (
+              <Pressable
+                hitSlop={6}
+                key={value}
+                onPress={(): void => setRating(rating === value ? null : value)}
+              >
+                <Ionicons
+                  color={isFilled ? colors.accent : colors.border}
+                  name={isFilled ? 'star' : 'star-outline'}
+                  size={30}
+                />
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.label}>NOTES</Text>
+        <TextInput
+          multiline
+          onChangeText={setNotes}
+          placeholder="What should future-you remember?"
+          placeholderTextColor={colors.muted}
+          style={[styles.input, styles.notesInput]}
+          value={notes}
+        />
+
+        <Text style={styles.label}>TAGS</Text>
+        <TextInput
+          onChangeText={setTags}
+          placeholder="#pourover #morning"
+          placeholderTextColor={colors.muted}
+          style={styles.input}
+          value={tags}
+        />
+
+        <View style={styles.favoriteRow}>
+          <View style={styles.favoriteLabel}>
+            <Ionicons color={colors.accent} name="heart" size={18} />
+            <Text style={styles.favoriteText}>Mark as favorite</Text>
+          </View>
+          <Switch
+            onValueChange={setIsFavorite}
+            thumbColor="#FFFFFF"
+            trackColor={{ false: colors.border, true: colors.accent }}
+            value={isFavorite}
+          />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-type LocationStatusProps = {
-  readonly errorMessage: string | null;
+type LocationPillProps = {
+  readonly dark?: boolean;
   readonly hasLocation: boolean;
   readonly isLocating: boolean;
   readonly onRetry: () => void;
 };
 
-const LocationStatus = ({
-  errorMessage,
-  hasLocation,
-  isLocating,
-  onRetry,
-}: LocationStatusProps): ReactElement => {
-  if (isLocating) {
-    return (
-      <View style={styles.locationCard}>
-        <ActivityIndicator color={colors.primary} />
-        <Text style={styles.locationText}>Getting your location...</Text>
-      </View>
-    );
-  }
-
-  if (errorMessage !== null) {
-    return (
-      <View style={styles.locationCard}>
-        <Text style={styles.locationErrorText}>{errorMessage} You can still save without it.</Text>
-        <Pressable onPress={onRetry} style={styles.locationButton}>
-          <Text style={styles.locationButtonText}>Retry location</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  if (hasLocation) {
-    return (
-      <View style={styles.locationCard}>
-        <Text style={styles.locationText}>Location added to this place.</Text>
-      </View>
-    );
-  }
+const LocationPill = ({ dark, hasLocation, isLocating, onRetry }: LocationPillProps): ReactElement => {
+  const label = isLocating ? 'Locating…' : hasLocation ? 'Location added' : 'Add location';
+  const tint = dark === true ? '#FFFFFF' : colors.accent;
 
   return (
-    <View style={styles.locationCard}>
-      <Text style={styles.locationText}>No location yet (optional).</Text>
-      <Pressable onPress={onRetry} style={styles.locationButton}>
-        <Text style={styles.locationButtonText}>Add location</Text>
-      </Pressable>
-    </View>
+    <Pressable
+      disabled={isLocating || hasLocation}
+      onPress={(): void => {
+        void onRetry();
+      }}
+      style={[styles.locationPill, dark === true ? styles.locationPillDark : styles.locationPillLight]}
+    >
+      {isLocating ? (
+        <ActivityIndicator color={tint} size="small" />
+      ) : (
+        <Ionicons color={tint} name="location" size={14} />
+      )}
+      <Text style={[styles.locationPillText, { color: tint }]}>{label}</Text>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
-  camera: {
-    flex: 1,
-  },
-  cameraOverlay: {
-    bottom: spacing.xl,
-    gap: spacing.md,
-    left: spacing.lg,
+  cameraBottom: {
+    alignItems: 'center',
+    bottom: 0,
+    left: 0,
     position: 'absolute',
-    right: spacing.lg,
+    right: 0,
   },
   cameraScreen: {
     backgroundColor: '#000000',
     flex: 1,
   },
-  cameraTitle: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  captureButton: {
+  cameraTop: {
     alignItems: 'center',
-    borderRadius: 22,
-    padding: spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    left: 0,
+    paddingHorizontal: spacing.lg,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
-  captureButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.64)',
-  },
-  captureButtonReady: {
-    backgroundColor: '#FFFFFF',
-  },
-  captureButtonText: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
+  cancelText: {
+    color: colors.muted,
+    fontSize: 16,
+    fontWeight: '600',
   },
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginBottom: spacing.md,
   },
-  categoryPill: {
+  closeButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
     borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
-  categoryPillActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryPillIdle: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-  },
-  categoryTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  categoryTextIdle: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  formActions: {
+  favoriteLabel: {
+    alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.md,
+  },
+  favoriteRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.xl,
+  },
+  favoriteText: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: '700',
   },
   formContent: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
   },
+  formHeader: {
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderBottomColor: colors.border,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
   formScreen: {
     backgroundColor: colors.background,
     flex: 1,
   },
+  formTitle: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '800',
+  },
   input: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
     color: colors.text,
     fontSize: 16,
-    marginBottom: spacing.md,
     padding: spacing.md,
   },
   label: {
-    color: colors.text,
-    fontSize: 15,
+    color: colors.muted,
+    fontSize: 12,
     fontWeight: '800',
+    letterSpacing: 1,
     marginBottom: spacing.xs,
+    marginTop: spacing.lg,
   },
-  locationButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  locationButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  locationCard: {
+  locationPill: {
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
+    alignSelf: 'flex-start',
+    borderRadius: 999,
     flexDirection: 'row',
-    gap: spacing.sm,
-    marginBottom: spacing.md,
-    padding: spacing.md,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
-  locationErrorText: {
-    color: colors.danger,
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
+  locationPillDark: {
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
-  locationText: {
-    color: colors.text,
-    flex: 1,
-    fontSize: 14,
+  locationPillLight: {
+    backgroundColor: colors.surface,
+    borderColor: colors.accent,
+    borderWidth: 1,
+  },
+  locationPillText: {
+    fontSize: 13,
     fontWeight: '700',
   },
   notesInput: {
-    minHeight: 120,
+    minHeight: 96,
     textAlignVertical: 'top',
   },
-  previewImage: {
+  photo: {
+    aspectRatio: 4 / 3,
     backgroundColor: colors.border,
-    borderRadius: 24,
-    height: 260,
-    marginBottom: spacing.lg,
-    width: '100%',
-  },
-  primaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 18,
-    flex: 1,
-    padding: spacing.md,
-  },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surface,
     borderColor: colors.border,
     borderRadius: 18,
     borderWidth: 1,
-    padding: spacing.md,
-    width: 110,
+    width: '100%',
   },
-  secondaryButtonText: {
+  pill: {
+    borderRadius: 999,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  pillActive: {
+    backgroundColor: colors.primary,
+  },
+  pillIdle: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+  },
+  pillRow: {
+    marginTop: spacing.md,
+  },
+  pillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  pillTextIdle: {
     color: colors.text,
+    fontWeight: '700',
+  },
+  saveText: {
+    color: colors.accent,
     fontSize: 16,
     fontWeight: '800',
+  },
+  shutter: {
+    alignItems: 'center',
+    borderColor: '#FFFFFF',
+    borderRadius: 40,
+    borderWidth: 4,
+    height: 76,
+    justifyContent: 'center',
+    width: 76,
+  },
+  shutterInner: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 30,
+    height: 60,
+    width: 60,
+  },
+  stars: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
 });

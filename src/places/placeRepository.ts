@@ -41,7 +41,7 @@ export const createPlace = (input: CreatePlaceInput): PlaceRecord => {
     input.notes.trim(),
     input.tags.trim(),
     input.rating,
-    0,
+    input.isFavorite ? 1 : 0,
     input.addressLabel.trim(),
     input.visitDate.trim(),
     timestamp,
