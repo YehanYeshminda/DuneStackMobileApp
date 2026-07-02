@@ -182,7 +182,7 @@ export default function CaptureScreen(): ReactElement {
           onCameraReady={handleCameraReady}
           onMountError={(): void => setIsCameraReady(false)}
           ref={cameraRef}
-          style={StyleSheet.absoluteFill}
+          style={styles.camera}
         />
         <View style={[styles.cameraTop, { paddingTop: insets.top + spacing.sm }]}>
           <Pressable
@@ -348,6 +348,9 @@ const LocationPill = ({ dark, hasLocation, isLocating, onRetry }: LocationPillPr
 };
 
 const styles = StyleSheet.create({
+  camera: {
+    flex: 1,
+  },
   cameraBottom: {
     alignItems: 'center',
     bottom: 0,
