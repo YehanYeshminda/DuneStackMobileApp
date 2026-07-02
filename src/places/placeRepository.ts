@@ -93,6 +93,7 @@ export const getPlaceById = (id: string): PlaceRecord => {
 export const deletePlace = (id: string): void => {
   const database = getDatabase();
   database.runSync(`DELETE FROM place_collections WHERE place_id = ?;`, id);
+  database.runSync(`DELETE FROM place_photos WHERE place_id = ?;`, id);
   database.runSync(
     `
       DELETE FROM places
@@ -105,6 +106,7 @@ export const deletePlace = (id: string): void => {
 export const deleteAllPlaces = (): void => {
   const database = getDatabase();
   database.runSync(`DELETE FROM place_collections;`);
+  database.runSync(`DELETE FROM place_photos;`);
   database.runSync(`DELETE FROM places;`);
 };
 

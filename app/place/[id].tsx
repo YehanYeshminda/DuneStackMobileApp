@@ -1,15 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { ReactElement, useCallback, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ReactElement, useCallback, useRef, useState } from 'react';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getCategoryColor, getCategoryLabel } from '../../src/categories/categories';
 import { deleteLocalImage } from '../../src/files/localImages';
 import { getCurrentMapsUrl } from '../../src/location/externalMaps';
+import { listPlacePhotos } from '../../src/places/placePhotoRepository';
 import { deletePlace, getPlaceById, setPlaceFavorite } from '../../src/places/placeRepository';
-import { PlaceRecord } from '../../src/places/placeTypes';
+import { PlacePhotoRecord, PlaceRecord } from '../../src/places/placeTypes';
 import { colors, fonts, spacing } from '../../src/shared/theme';
 
 type RouteParams = {
@@ -18,16 +28,25 @@ type RouteParams = {
 
 export default function PlaceDetailScreen(): ReactElement {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const params = useLocalSearchParams<RouteParams>();
+  const carouselRef = useRef<ScrollView>(null);
   const [place, setPlace] = useState<PlaceRecord | null>(null);
+  const [photos, setPhotos] = useState<PlacePhotoRecord[]>([]);
+  const [photoIndex, setPhotoIndex] = useState<number>(0);
 
   const loadPlace = useCallback((): void => {
     if (typeof params.id !== 'string') {
       throw new Error('Place detail screen requires a place id route parameter.');
     }
 
-    setPlace(getPlaceById(params.id));
+    const loaded = getPlaceById(params.id);
+    setPlace(loaded);
+    setPhotos(listPlacePhotos(loaded.id));
+    setPhotoIndex(0);
   }, [params.id]);
+
+  const pageWidth = width - spacing.lg * 2;
 
   useFocusEffect(loadPlace);
 
@@ -75,7 +94,10 @@ export default function PlaceDetailScreen(): ReactElement {
 
     try {
       deletePlace(place.id);
-      await deleteLocalImage(place.photoUri);
+      const uris = photos.length > 0 ? photos.map((photo: PlacePhotoRecord): string => photo.uri) : [place.photoUri];
+      for (const uri of uris) {
+        await deleteLocalImage(uri);
+      }
       router.replace('/');
     } catch (error: unknown) {
       const message =
@@ -96,6 +118,10 @@ export default function PlaceDetailScreen(): ReactElement {
 
   const tags = parseTags(place.tags);
   const hasLocation = place.latitude !== null && place.longitude !== null;
+  const displayPhotos: PlacePhotoRecord[] =
+    photos.length > 0
+      ? photos
+      : [{ id: 'cover', placeId: place.id, position: 0, uri: place.photoUri }];
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}>
@@ -135,7 +161,44 @@ export default function PlaceDetailScreen(): ReactElement {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Image source={{ uri: place.photoUri }} style={styles.photo} />
+        <ScrollView
+          horizontal
+          onMomentumScrollEnd={(event): void =>
+            setPhotoIndex(Math.round(event.nativeEvent.contentOffset.x / pageWidth))
+          }
+          pagingEnabled
+          ref={carouselRef}
+          showsHorizontalScrollIndicator={false}
+          style={{ width: pageWidth }}
+        >
+          {displayPhotos.map((photo: PlacePhotoRecord): ReactElement => (
+            <Image key={photo.id} source={{ uri: photo.uri }} style={[styles.photo, { width: pageWidth }]} />
+          ))}
+        </ScrollView>
+
+        {displayPhotos.length > 1 ? (
+          <View style={styles.photoStrip}>
+            <Text style={styles.photoCounter}>
+              {photoIndex + 1} of {displayPhotos.length}
+            </Text>
+            <View style={styles.thumbs}>
+              {displayPhotos.map((photo: PlacePhotoRecord, index: number): ReactElement => (
+                <Pressable
+                  key={photo.id}
+                  onPress={(): void => {
+                    carouselRef.current?.scrollTo({ animated: true, x: index * pageWidth });
+                    setPhotoIndex(index);
+                  }}
+                >
+                  <Image
+                    source={{ uri: photo.uri }}
+                    style={[styles.thumb, index === photoIndex ? styles.thumbActive : undefined]}
+                  />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <Text style={styles.title}>{place.title}</Text>
 
@@ -329,7 +392,34 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     marginTop: spacing.xs,
-    width: '100%',
+  },
+  photoCounter: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  photoStrip: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  thumb: {
+    backgroundColor: colors.border,
+    borderRadius: 8,
+    height: 44,
+    width: 44,
+  },
+  thumbActive: {
+    borderColor: colors.accent,
+    borderWidth: 2,
+  },
+  thumbs: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+    justifyContent: 'flex-end',
   },
   screen: {
     backgroundColor: colors.background,

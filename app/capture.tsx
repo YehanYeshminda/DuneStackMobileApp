@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { categories, Category } from '../src/categories/categories';
 import { saveCapturedImage } from '../src/files/localImages';
 import { CapturedLocation, getCurrentPlaceLocation } from '../src/location/currentLocation';
+import { addPlacePhotos } from '../src/places/placePhotoRepository';
 import { createPlace } from '../src/places/placeRepository';
 import { colors, spacing } from '../src/shared/theme';
 
@@ -31,7 +32,8 @@ export default function CaptureScreen(): ReactElement {
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedAt, setCapturedAt] = useState<string | null>(null);
   const [capturedLocation, setCapturedLocation] = useState<CapturedLocation | null>(null);
-  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+  const [capturedPhotoUris, setCapturedPhotoUris] = useState<string[]>([]);
+  const [showCamera, setShowCamera] = useState<boolean>(true);
   const [isCameraReady, setIsCameraReady] = useState<boolean>(false);
   const [isTakingPhoto, setIsTakingPhoto] = useState<boolean>(false);
   const [isLocating, setIsLocating] = useState<boolean>(false);
@@ -114,8 +116,12 @@ export default function CaptureScreen(): ReactElement {
         return;
       }
 
-      setCapturedAt(new Date().toISOString());
-      setCapturedPhotoUri(photo.uri);
+      if (capturedPhotoUris.length === 0) {
+        setCapturedAt(new Date().toISOString());
+      }
+
+      setCapturedPhotoUris((previous: string[]): string[] => [...previous, photo.uri]);
+      setShowCamera(false);
     } catch (error: unknown) {
       if (!isMountedRef.current) {
         return;
@@ -134,7 +140,7 @@ export default function CaptureScreen(): ReactElement {
   };
 
   const savePlace = async (): Promise<void> => {
-    if (capturedPhotoUri === null || capturedAt === null) {
+    if (capturedPhotoUris.length === 0 || capturedAt === null) {
       Alert.alert('Photo required', 'Take a photo before saving this place.');
       return;
     }
@@ -147,7 +153,12 @@ export default function CaptureScreen(): ReactElement {
     setIsSaving(true);
 
     try {
-      const savedPhotoUri = await saveCapturedImage(capturedPhotoUri);
+      const savedUris: string[] = [];
+
+      for (const uri of capturedPhotoUris) {
+        savedUris.push(await saveCapturedImage(uri));
+      }
+
       const savedPlace = createPlace({
         addressLabel: '',
         capturedAt,
@@ -157,13 +168,14 @@ export default function CaptureScreen(): ReactElement {
         locationAccuracyMeters: capturedLocation?.accuracyMeters ?? null,
         longitude: capturedLocation?.longitude ?? null,
         notes,
-        photoUri: savedPhotoUri,
+        photoUri: savedUris[0],
         rating,
         tags,
         title,
         visitDate: '',
       });
 
+      addPlacePhotos(savedPlace.id, savedUris);
       router.replace(`/place/${savedPlace.id}`);
     } catch (error: unknown) {
       const message =
@@ -174,7 +186,7 @@ export default function CaptureScreen(): ReactElement {
     }
   };
 
-  if (capturedPhotoUri === null) {
+  if (showCamera) {
     return (
       <View style={styles.cameraScreen}>
         <CameraView
@@ -188,7 +200,13 @@ export default function CaptureScreen(): ReactElement {
           <Pressable
             accessibilityLabel="Close camera"
             accessibilityRole="button"
-            onPress={(): void => router.back()}
+            onPress={(): void => {
+              if (capturedPhotoUris.length > 0) {
+                setShowCamera(false);
+              } else {
+                router.back();
+              }
+            }}
             style={styles.closeButton}
           >
             <Ionicons color="#FFFFFF" name="close" size={22} />
@@ -227,7 +245,23 @@ export default function CaptureScreen(): ReactElement {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Image source={{ uri: capturedPhotoUri }} style={styles.photo} />
+        <ScrollView
+          contentContainerStyle={styles.photoStrip}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          {capturedPhotoUris.map((uri: string): ReactElement => (
+            <Image key={uri} source={{ uri }} style={styles.stripPhoto} />
+          ))}
+          <Pressable
+            accessibilityLabel="Add another photo"
+            accessibilityRole="button"
+            onPress={(): void => setShowCamera(true)}
+            style={styles.addPhotoTile}
+          >
+            <Ionicons color={colors.muted} name="add" size={28} />
+          </Pressable>
+        </ScrollView>
 
         <View style={styles.pillRow}>
           <LocationPill hasLocation={capturedLocation !== null} isLocating={isLocating} onRetry={fetchCurrentLocation} />
@@ -471,13 +505,25 @@ const styles = StyleSheet.create({
     minHeight: 96,
     textAlignVertical: 'top',
   },
-  photo: {
-    aspectRatio: 4 / 3,
-    backgroundColor: colors.border,
+  addPhotoTile: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
-    width: '100%',
+    height: 96,
+    justifyContent: 'center',
+    width: 96,
+  },
+  photoStrip: {
+    gap: spacing.sm,
+    paddingRight: spacing.lg,
+  },
+  stripPhoto: {
+    backgroundColor: colors.border,
+    borderRadius: 14,
+    height: 96,
+    width: 96,
   },
   pill: {
     borderRadius: 999,

@@ -67,6 +67,21 @@ export type PlaceRow = {
   readonly visit_date: string;
 };
 
+export type PlacePhotoRecord = {
+  readonly id: string;
+  readonly placeId: string;
+  readonly position: number;
+  readonly uri: string;
+};
+
+export type PlacePhotoRow = {
+  readonly created_at: string;
+  readonly id: string;
+  readonly place_id: string;
+  readonly position: number;
+  readonly uri: string;
+};
+
 /** A place that has a saved GPS coordinate (e.g. for the map). */
 export type LocatedPlace = PlaceRecord & {
   readonly latitude: number;

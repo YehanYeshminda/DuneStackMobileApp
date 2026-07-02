@@ -123,6 +123,28 @@ export const migrations: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 4,
+    up: (database: SQLite.SQLiteDatabase): void => {
+      // Multiple photos per place. Existing places are backfilled with their
+      // single photo at position 0; places.photo_uri stays as the cover.
+      database.execSync(`
+        CREATE TABLE IF NOT EXISTS place_photos (
+          id TEXT PRIMARY KEY NOT NULL,
+          place_id TEXT NOT NULL,
+          uri TEXT NOT NULL,
+          position INTEGER NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (place_id) REFERENCES places (id)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_place_photos_place ON place_photos (place_id);
+
+        INSERT INTO place_photos (id, place_id, uri, position, created_at)
+          SELECT 'photo_' || id, id, photo_uri, 0, created_at FROM places;
+      `);
+    },
+  },
 ];
 
 const seedDefaultCategories = (database: SQLite.SQLiteDatabase): void => {

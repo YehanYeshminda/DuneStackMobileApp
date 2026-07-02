@@ -15,6 +15,7 @@ import {
 import { categories, Category } from '../../../src/categories/categories';
 import { deleteLocalImage, saveCapturedImage } from '../../../src/files/localImages';
 import { CapturedLocation, getCurrentPlaceLocation } from '../../../src/location/currentLocation';
+import { replacePlacePhotos } from '../../../src/places/placePhotoRepository';
 import { getPlaceById, updatePlace } from '../../../src/places/placeRepository';
 import { PlaceRecord } from '../../../src/places/placeTypes';
 import { parsePlaceRating } from '../../../src/places/placeValidation';
@@ -194,6 +195,7 @@ export default function EditPlaceScreen(): ReactElement {
       });
 
       if (draftPhotoUri !== null) {
+        replacePlacePhotos(updatedPlace.id, [savedPhotoUri]);
         await deleteLocalImage(originalPlace.photoUri);
       }
 
