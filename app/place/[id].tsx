@@ -176,29 +176,39 @@ export default function PlaceDetailScreen(): ReactElement {
           ))}
         </ScrollView>
 
-        {displayPhotos.length > 1 ? (
-          <View style={styles.photoStrip}>
+        <View style={styles.photoStrip}>
+          {displayPhotos.length > 1 ? (
             <Text style={styles.photoCounter}>
               {photoIndex + 1} of {displayPhotos.length}
             </Text>
-            <View style={styles.thumbs}>
-              {displayPhotos.map((photo: PlacePhotoRecord, index: number): ReactElement => (
-                <Pressable
-                  key={photo.id}
-                  onPress={(): void => {
-                    carouselRef.current?.scrollTo({ animated: true, x: index * pageWidth });
-                    setPhotoIndex(index);
-                  }}
-                >
-                  <Image
-                    source={{ uri: photo.uri }}
-                    style={[styles.thumb, index === photoIndex ? styles.thumbActive : undefined]}
-                  />
-                </Pressable>
-              ))}
-            </View>
+          ) : (
+            <View />
+          )}
+          <View style={styles.thumbs}>
+            {displayPhotos.map((photo: PlacePhotoRecord, index: number): ReactElement => (
+              <Pressable
+                key={photo.id}
+                onPress={(): void => {
+                  carouselRef.current?.scrollTo({ animated: true, x: index * pageWidth });
+                  setPhotoIndex(index);
+                }}
+              >
+                <Image
+                  source={{ uri: photo.uri }}
+                  style={[styles.thumb, index === photoIndex ? styles.thumbActive : undefined]}
+                />
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityLabel="Add a photo"
+              accessibilityRole="button"
+              onPress={(): void => router.push(`/place/add-photo/${place.id}`)}
+              style={styles.addThumb}
+            >
+              <Ionicons color={colors.muted} name="add" size={22} />
+            </Pressable>
           </View>
-        ) : null}
+        </View>
 
         <Text style={styles.title}>{place.title}</Text>
 
@@ -404,6 +414,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     justifyContent: 'space-between',
     marginTop: spacing.sm,
+  },
+  addThumb: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
   },
   thumb: {
     backgroundColor: colors.border,
