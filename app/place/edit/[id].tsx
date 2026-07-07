@@ -15,6 +15,7 @@ import {
 import { categories, Category } from '../../../src/categories/categories';
 import { deleteLocalImage, saveCapturedImage } from '../../../src/files/localImages';
 import { CapturedLocation, getCurrentPlaceLocation } from '../../../src/location/currentLocation';
+import { replacePlacePhotos } from '../../../src/places/placePhotoRepository';
 import { getPlaceById, updatePlace } from '../../../src/places/placeRepository';
 import { PlaceRecord } from '../../../src/places/placeTypes';
 import { parsePlaceRating } from '../../../src/places/placeValidation';
@@ -107,7 +108,14 @@ export default function EditPlaceScreen(): ReactElement {
       const photo: CameraCapturedPicture = await cameraRef.current.takePictureAsync({
         quality: 0.85,
       });
-      const location = await getCurrentPlaceLocation();
+
+      // Location is optional — keep the retake usable even without a GPS fix.
+      let location: CapturedLocation | null = null;
+      try {
+        location = await getCurrentPlaceLocation();
+      } catch {
+        location = null;
+      }
 
       if (!isMountedRef.current) {
         return;
@@ -147,12 +155,12 @@ export default function EditPlaceScreen(): ReactElement {
     }
 
     if (
-      (draftPhotoUri !== null || draftLocation !== null || draftCapturedAt !== null) &&
-      !isCompleteRetake(draftPhotoUri, draftLocation, draftCapturedAt)
+      (draftPhotoUri !== null || draftCapturedAt !== null) &&
+      !isCompleteRetake(draftPhotoUri, draftCapturedAt)
     ) {
       Alert.alert(
         'Retake incomplete',
-        'Retake the photo again so the image, capture time, and current geotag are saved together.',
+        'Retake the photo again so the image and capture time are saved together.',
       );
       return;
     }
@@ -187,6 +195,7 @@ export default function EditPlaceScreen(): ReactElement {
       });
 
       if (draftPhotoUri !== null) {
+        replacePlacePhotos(updatedPlace.id, [savedPhotoUri]);
         await deleteLocalImage(originalPlace.photoUri);
       }
 
@@ -330,11 +339,8 @@ export default function EditPlaceScreen(): ReactElement {
   );
 }
 
-const isCompleteRetake = (
-  photoUri: string | null,
-  location: CapturedLocation | null,
-  capturedAt: string | null,
-): boolean => photoUri !== null && location !== null && capturedAt !== null;
+const isCompleteRetake = (photoUri: string | null, capturedAt: string | null): boolean =>
+  photoUri !== null && capturedAt !== null;
 
 const styles = StyleSheet.create({
   body: {

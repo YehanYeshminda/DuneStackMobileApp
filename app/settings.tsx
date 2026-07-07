@@ -1,217 +1,313 @@
-import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { exportPlacesToFile } from '../src/data/exportPlaces';
+import { deleteLocalImage } from '../src/files/localImages';
 import {
   AppPermissions,
-  AppPermissionState,
   readAppPermissions,
   requestCameraPermission,
   requestLocationPermission,
 } from '../src/privacy/permissionStatus';
-import { colors, spacing } from '../src/shared/theme';
+import { deleteAllPlaces, listPlaces } from '../src/places/placeRepository';
+import { colors, fonts, spacing } from '../src/shared/theme';
 
 export default function SettingsScreen(): ReactElement {
+  const insets = useSafeAreaInsets();
   const [permissions, setPermissions] = useState<AppPermissions | null>(null);
+  const [placeCount, setPlaceCount] = useState<number>(0);
+  const [isBusy, setIsBusy] = useState<boolean>(false);
 
-  const loadPermissions = useCallback((): void => {
+  const load = useCallback((): void => {
     readAppPermissions()
       .then(setPermissions)
-      .catch((error: unknown): void => {
-        const message =
-          error instanceof Error ? error.message : 'Could not read permission status.';
-        Alert.alert('Permission check failed', message);
-      });
+      .catch((): void => setPermissions(null));
+    setPlaceCount(listPlaces('').length);
   }, []);
 
-  useFocusEffect(loadPermissions);
+  useFocusEffect(load);
 
-  const requestCamera = async (): Promise<void> => {
-    const camera = await requestCameraPermission();
-    setPermissions((currentPermissions: AppPermissions | null): AppPermissions | null => {
-      if (currentPermissions === null) {
-        return currentPermissions;
-      }
+  const cameraGranted = permissions?.camera?.granted === true;
+  const cameraBlocked =
+    permissions?.camera?.granted === false && permissions?.camera?.canAskAgain === false;
+  const locationGranted = permissions?.location?.granted === true;
 
-      return { ...currentPermissions, camera };
+  const handleCamera = (): void => {
+    if (cameraGranted) {
+      return;
+    }
+
+    if (cameraBlocked) {
+      void Linking.openSettings();
+      return;
+    }
+
+    void requestCameraPermission().then((camera): void => {
+      setPermissions((current: AppPermissions | null): AppPermissions | null =>
+        current === null ? current : { ...current, camera },
+      );
     });
   };
 
-  const requestLocation = async (): Promise<void> => {
-    const location = await requestLocationPermission();
-    setPermissions((currentPermissions: AppPermissions | null): AppPermissions | null => {
-      if (currentPermissions === null) {
-        return currentPermissions;
-      }
+  const handleLocationToggle = (next: boolean): void => {
+    if (!next) {
+      void Linking.openSettings();
+      return;
+    }
 
-      return { ...currentPermissions, location };
+    void requestLocationPermission().then((location): void => {
+      setPermissions((current: AppPermissions | null): AppPermissions | null =>
+        current === null ? current : { ...current, location },
+      );
     });
   };
 
-  const openDeviceSettings = async (): Promise<void> => {
-    await Linking.openSettings();
+  const handleExport = async (): Promise<void> => {
+    setIsBusy(true);
+
+    try {
+      const result = await exportPlacesToFile();
+
+      if (result.count === 0) {
+        Alert.alert('Nothing to export', 'Save a place first, then export your data.');
+      } else if (!result.shared) {
+        Alert.alert(
+          'Sharing unavailable',
+          'The file was created but sharing is not available here.',
+        );
+      }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not export your data.';
+      Alert.alert('Export failed', message);
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleImport = (): void => {
+    Alert.alert(
+      'Import coming soon',
+      'Restoring from a backup file is not available on this build yet.',
+    );
+  };
+
+  const confirmErase = (): void => {
+    Alert.alert(
+      'Erase all places?',
+      'This permanently deletes every place and photo on this device.',
+      [
+        { style: 'cancel', text: 'Cancel' },
+        { onPress: eraseAll, style: 'destructive', text: 'Erase all' },
+      ],
+    );
+  };
+
+  const eraseAll = async (): Promise<void> => {
+    setIsBusy(true);
+
+    try {
+      const places = listPlaces('');
+
+      for (const place of places) {
+        await deleteLocalImage(place.photoUri);
+      }
+
+      deleteAllPlaces();
+      setPlaceCount(0);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Could not erase places.';
+      Alert.alert('Erase failed', message);
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.title}>Local-only by design</Text>
-      <Text style={styles.body}>
-        DuneStack Places does not use login, cloud sync, analytics, or remote uploads in this MVP.
+    <ScrollView
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      style={[styles.screen, { paddingTop: insets.top + spacing.sm }]}
+    >
+      <Pressable
+        accessibilityLabel="Go back"
+        accessibilityRole="button"
+        onPress={(): void => router.back()}
+        style={styles.backButton}
+      >
+        <Ionicons color={colors.text} name="chevron-back" size={20} />
+      </Pressable>
+      <Text style={styles.title}>Settings</Text>
+
+      <Text style={styles.sectionLabel}>PERMISSIONS</Text>
+
+      <View style={styles.row}>
+        <Ionicons color={colors.text} name="camera-outline" size={22} />
+        <Text style={styles.rowLabel}>Camera</Text>
+        <Pressable disabled={cameraGranted} onPress={handleCamera} style={styles.statusPill}>
+          <Text style={styles.statusPillText}>
+            {cameraGranted ? 'Allowed' : cameraBlocked ? 'Open Settings' : 'Enable'}
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={[styles.row, styles.rowDivider]}>
+        <Ionicons color={colors.accent} name="location-outline" size={22} />
+        <Text style={styles.rowLabel}>Location</Text>
+        <Switch
+          onValueChange={handleLocationToggle}
+          thumbColor="#FFFFFF"
+          trackColor={{ false: colors.border, true: colors.accent }}
+          value={locationGranted}
+        />
+      </View>
+      <Text style={styles.rowSubtext}>
+        Used only when capturing a place. Off means places save without GPS.
       </Text>
 
-      <PermissionCard
-        body="Used only when you take a place photo."
-        onOpenSettings={openDeviceSettings}
-        onRequest={requestCamera}
-        permission={permissions?.camera ?? null}
-        title="Camera"
-      />
+      <Text style={styles.sectionLabel}>YOUR DATA</Text>
 
-      <PermissionCard
-        body="Requested while saving a place. No background tracking is implemented."
-        onOpenSettings={openDeviceSettings}
-        onRequest={requestLocation}
-        permission={permissions?.location ?? null}
-        title="Location"
+      <DataRow
+        onPress={(): void => {
+          void handleExport();
+        }}
+        subtitle="Save everything as a file you control"
+        title="Export data"
       />
+      <DataRow
+        onPress={handleImport}
+        subtitle="Restore from a previously exported file"
+        title="Import data"
+      />
+      <DataRow danger onPress={confirmErase} title="Erase all places" />
 
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Backups</Text>
-        <Text style={styles.cardBody}>
-          Manual export and import are planned next, keeping control in the user&apos;s hands.
-        </Text>
-      </View>
-    </View>
+      <Text style={styles.footer}>
+        {placeCount} {placeCount === 1 ? 'place' : 'places'} · stored only on this device
+      </Text>
+
+      {isBusy ? <Text style={styles.busy}>Working…</Text> : null}
+    </ScrollView>
   );
 }
 
-type PermissionCardProps = {
-  readonly body: string;
-  readonly onOpenSettings: () => Promise<void>;
-  readonly onRequest: () => Promise<void>;
-  readonly permission: AppPermissionState | null;
+type DataRowProps = {
+  readonly danger?: boolean;
+  readonly onPress: () => void;
+  readonly subtitle?: string;
   readonly title: string;
 };
 
-const PermissionCard = ({
-  body,
-  onOpenSettings,
-  onRequest,
-  permission,
-  title,
-}: PermissionCardProps): ReactElement => {
-  const buttonLabel =
-    permission?.canAskAgain === false && permission.granted === false
-      ? 'Open Settings'
-      : 'Request Access';
-  const buttonAction =
-    permission?.canAskAgain === false && permission.granted === false ? onOpenSettings : onRequest;
-
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <View
-          style={[
-            styles.badge,
-            permission?.granted === true ? styles.badgeAllowed : styles.badgeDenied,
-          ]}
-        >
-          <Text
-            style={permission?.granted === true ? styles.badgeAllowedText : styles.badgeDeniedText}
-          >
-            {permission?.label ?? 'Checking'}
-          </Text>
-        </View>
-      </View>
-      <Text style={styles.cardBody}>{body}</Text>
-      <Text style={styles.permissionMeta}>System status: {permission?.status ?? 'loading'}</Text>
-      {permission?.granted !== true ? (
-        <Pressable onPress={buttonAction} style={styles.permissionButton}>
-          <Text style={styles.permissionButtonText}>{buttonLabel}</Text>
-        </Pressable>
-      ) : null}
+const DataRow = ({ danger, onPress, subtitle, title }: DataRowProps): ReactElement => (
+  <Pressable onPress={onPress} style={[styles.row, styles.rowDivider]}>
+    <View style={styles.dataRowBody}>
+      <Text style={danger === true ? styles.dataRowTitleDanger : styles.dataRowTitle}>{title}</Text>
+      {subtitle !== undefined ? <Text style={styles.rowSubtext}>{subtitle}</Text> : null}
     </View>
-  );
-};
+    <Ionicons color={colors.muted} name="chevron-forward" size={18} />
+  </Pressable>
+);
 
 const styles = StyleSheet.create({
-  badge: {
-    borderRadius: 999,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-  },
-  badgeAllowed: {
-    backgroundColor: '#E5F4EA',
-  },
-  badgeAllowedText: {
-    color: '#246B3D',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  badgeDenied: {
-    backgroundColor: '#F7E8DF',
-  },
-  badgeDeniedText: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  body: {
-    color: colors.muted,
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: spacing.lg,
-  },
-  card: {
-    backgroundColor: colors.surface,
+  backButton: {
+    alignItems: 'center',
     borderColor: colors.border,
-    borderRadius: 22,
+    borderRadius: 999,
     borderWidth: 1,
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-    padding: spacing.lg,
+    height: 36,
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+    width: 36,
   },
-  cardBody: {
+  busy: {
     color: colors.muted,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    marginTop: spacing.md,
+    textAlign: 'center',
   },
-  cardHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  content: {
+    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
   },
-  cardTitle: {
+  dataRowBody: {
+    flex: 1,
+  },
+  dataRowTitle: {
     color: colors.text,
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 16,
+    fontWeight: '700',
   },
-  permissionButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    marginTop: spacing.sm,
-    padding: spacing.md,
+  dataRowTitleDanger: {
+    color: colors.danger,
+    fontSize: 16,
+    fontWeight: '700',
   },
-  permissionButtonText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  permissionMeta: {
+  footer: {
     color: colors.muted,
     fontSize: 13,
-    marginTop: spacing.xs,
+    marginTop: spacing.xl,
+    textAlign: 'center',
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  rowDivider: {
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+  },
+  rowLabel: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  rowSubtext: {
+    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 19,
+    paddingBottom: spacing.sm,
   },
   screen: {
     backgroundColor: colors.background,
     flex: 1,
-    padding: spacing.lg,
+  },
+  sectionLabel: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: spacing.xs,
+    marginTop: spacing.lg,
+  },
+  statusPill: {
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  statusPillText: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '700',
   },
   title: {
     color: colors.text,
-    fontSize: 32,
+    fontFamily: fonts.serif,
+    fontSize: 30,
     fontWeight: '800',
     marginBottom: spacing.sm,
   },

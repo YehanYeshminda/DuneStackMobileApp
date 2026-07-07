@@ -1,124 +1,140 @@
-import { Link, useFocusEffect } from 'expo-router';
-import { ReactElement, useCallback, useState } from 'react';
-import { FlatList, ImageBackground, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useFocusEffect } from 'expo-router';
+import { ReactElement, useCallback, useMemo, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getCategoryLabel } from '../src/categories/categories';
 import { listPlaces } from '../src/places/placeRepository';
+import { groupPlacesByMonth, PlaceSection } from '../src/places/placeTimeline';
 import { PlaceRecord } from '../src/places/placeTypes';
-import { colors, spacing } from '../src/shared/theme';
+import { colors, fonts, spacing } from '../src/shared/theme';
 
 export default function GalleryScreen(): ReactElement {
+  const insets = useSafeAreaInsets();
   const [places, setPlaces] = useState<PlaceRecord[]>([]);
 
-  const loadPlaces = useCallback((): void => {
-    setPlaces(listPlaces(''));
-  }, []);
+  useFocusEffect(
+    useCallback((): void => {
+      setPlaces(listPlaces(''));
+    }, []),
+  );
 
-  useFocusEffect(loadPlaces);
+  const sections = useMemo((): PlaceSection[] => groupPlacesByMonth(places), [places]);
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Gallery</Text>
-      <Text style={styles.body}>
-        A photo-first view of every place saved locally on this device.
-      </Text>
+      <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Pressable
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          onPress={(): void => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons color={colors.text} name="chevron-back" size={20} />
+        </Pressable>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Gallery</Text>
+          <Text style={styles.count}>
+            {places.length} {places.length === 1 ? 'PHOTO' : 'PHOTOS'}
+          </Text>
+        </View>
+      </View>
 
-      <FlatList
-        columnWrapperStyle={styles.columnWrapper}
-        contentContainerStyle={styles.listContent}
-        data={places}
-        keyExtractor={(item: PlaceRecord): string => item.id}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {places.length === 0 ? (
+          <Text style={styles.empty}>
             No photos saved yet. Capture a place to build your gallery.
           </Text>
-        }
-        numColumns={2}
-        renderItem={({ item }: { item: PlaceRecord }): ReactElement => (
-          <Link asChild href={`/place/${item.id}`}>
-            <Pressable style={styles.tile}>
-              <ImageBackground
-                imageStyle={styles.tileImage}
-                source={{ uri: item.photoUri }}
-                style={styles.tileImageBackground}
-              >
-                <View style={styles.tileOverlay}>
-                  <Text numberOfLines={1} style={styles.tileTitle}>
-                    {item.title}
-                  </Text>
-                  <Text numberOfLines={1} style={styles.tileMeta}>
-                    {getCategoryLabel(item.categoryId)}
-                  </Text>
-                </View>
-              </ImageBackground>
-            </Pressable>
-          </Link>
-        )}
-      />
+        ) : null}
+        {sections.map((section: PlaceSection): ReactElement => (
+          <View key={section.key}>
+            <Text style={styles.divider}>{section.title.toUpperCase()}</Text>
+            <View style={styles.grid}>
+              {section.data.map((place: PlaceRecord): ReactElement => (
+                <Pressable
+                  key={place.id}
+                  onPress={(): void => router.push(`/place/${place.id}`)}
+                  style={styles.tile}
+                >
+                  <Image source={{ uri: place.photoUri }} style={styles.tileImage} />
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ))}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  body: {
+  backButton: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 36,
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+    width: 36,
+  },
+  content: {
+    paddingBottom: spacing.xl,
+  },
+  count: {
     color: colors.muted,
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: spacing.lg,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
-  columnWrapper: {
-    gap: spacing.md,
+  divider: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1,
+    paddingBottom: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
   },
-  emptyText: {
+  empty: {
     color: colors.muted,
     fontSize: 16,
     lineHeight: 23,
     padding: spacing.lg,
     textAlign: 'center',
   },
-  listContent: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  header: {
+    paddingHorizontal: spacing.lg,
   },
   screen: {
     backgroundColor: colors.background,
     flex: 1,
-    padding: spacing.lg,
   },
   tile: {
-    aspectRatio: 0.78,
-    borderRadius: 24,
-    flex: 1,
-    overflow: 'hidden',
+    aspectRatio: 1,
+    width: '33.333%',
   },
   tileImage: {
-    borderRadius: 24,
-  },
-  tileImageBackground: {
     backgroundColor: colors.border,
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  tileMeta: {
-    color: '#F5EDE4',
-    fontSize: 12,
-    fontWeight: '700',
-    marginTop: 3,
-  },
-  tileOverlay: {
-    backgroundColor: 'rgba(36, 23, 15, 0.64)',
-    padding: spacing.md,
-  },
-  tileTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
+    borderColor: colors.background,
+    borderWidth: 1,
+    height: '100%',
+    width: '100%',
   },
   title: {
     color: colors.text,
-    fontSize: 34,
+    fontFamily: fonts.serif,
+    fontSize: 30,
     fontWeight: '800',
-    lineHeight: 40,
-    marginBottom: spacing.xs,
+  },
+  titleRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm,
   },
 });

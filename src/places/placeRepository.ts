@@ -41,7 +41,7 @@ export const createPlace = (input: CreatePlaceInput): PlaceRecord => {
     input.notes.trim(),
     input.tags.trim(),
     input.rating,
-    0,
+    input.isFavorite ? 1 : 0,
     input.addressLabel.trim(),
     input.visitDate.trim(),
     timestamp,
@@ -92,6 +92,8 @@ export const getPlaceById = (id: string): PlaceRecord => {
 
 export const deletePlace = (id: string): void => {
   const database = getDatabase();
+  database.runSync(`DELETE FROM place_collections WHERE place_id = ?;`, id);
+  database.runSync(`DELETE FROM place_photos WHERE place_id = ?;`, id);
   database.runSync(
     `
       DELETE FROM places
@@ -99,6 +101,13 @@ export const deletePlace = (id: string): void => {
     `,
     id,
   );
+};
+
+export const deleteAllPlaces = (): void => {
+  const database = getDatabase();
+  database.runSync(`DELETE FROM place_collections;`);
+  database.runSync(`DELETE FROM place_photos;`);
+  database.runSync(`DELETE FROM places;`);
 };
 
 export const updatePlace = (id: string, input: UpdatePlaceInput): PlaceRecord => {
@@ -157,7 +166,7 @@ export const setPlaceFavorite = (id: string, isFavorite: boolean): PlaceRecord =
   return getPlaceById(id);
 };
 
-const mapPlaceRow = (row: PlaceRow): PlaceRecord => ({
+export const mapPlaceRow = (row: PlaceRow): PlaceRecord => ({
   addressLabel: row.address_label,
   capturedAt: row.captured_at,
   categoryId: row.category_id,

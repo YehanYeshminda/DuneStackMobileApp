@@ -42,7 +42,13 @@ export default function SavedPositionScreen(): ReactElement {
         This privacy-safe preview uses the saved GPS point without loading online map tiles.
       </Text>
 
-      <LocalPositionCard onOpenMaps={openExternalMaps} place={place} />
+      {place.latitude !== null && place.longitude !== null ? (
+        <LocalPositionCard onOpenMaps={openExternalMaps} place={place} />
+      ) : (
+        <View style={styles.noLocationCard}>
+          <Text style={styles.noLocationText}>No location was saved for this place.</Text>
+        </View>
+      )}
 
       <View style={styles.photoCard}>
         <Image source={{ uri: place.photoUri }} style={styles.photo} />
@@ -117,7 +123,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   gridLineHorizontalOne: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     height: 1,
     left: 0,
     position: 'absolute',
@@ -125,7 +131,7 @@ const styles = StyleSheet.create({
     top: '34%',
   },
   gridLineHorizontalTwo: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     height: 1,
     left: 0,
     position: 'absolute',
@@ -133,7 +139,7 @@ const styles = StyleSheet.create({
     top: '62%',
   },
   gridLineVerticalOne: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     bottom: 0,
     left: '32%',
     position: 'absolute',
@@ -141,7 +147,7 @@ const styles = StyleSheet.create({
     width: 1,
   },
   gridLineVerticalTwo: {
-    backgroundColor: '#E7D7C3',
+    backgroundColor: '#CBD9E6',
     bottom: 0,
     left: '68%',
     position: 'absolute',
@@ -149,7 +155,7 @@ const styles = StyleSheet.create({
     width: 1,
   },
   mapCard: {
-    backgroundColor: '#EFE2D1',
+    backgroundColor: '#E4ECF3',
     borderColor: colors.border,
     borderRadius: 28,
     borderWidth: 1,
@@ -168,6 +174,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
+  },
+  noLocationCard: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: 24,
+    borderWidth: 1,
+    marginBottom: spacing.lg,
+    padding: spacing.xl,
+  },
+  noLocationText: {
+    color: colors.muted,
+    fontSize: 16,
+    textAlign: 'center',
   },
   photo: {
     backgroundColor: colors.border,

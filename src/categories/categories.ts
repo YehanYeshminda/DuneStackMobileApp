@@ -23,3 +23,9 @@ export const getCategoryLabel = (categoryId: string): string => {
 
   return category.label;
 };
+
+export const getCategoryColor = (categoryId: string): string => {
+  const category = categories.find((item: Category): boolean => item.id === categoryId);
+
+  return category?.color ?? '#8C8073';
+};
