@@ -38,7 +38,10 @@ export const findNearbyPlace = async (places: PlaceRecord[]): Promise<NearbyMatc
       place.longitude,
     );
 
-    if (distanceMeters <= NEARBY_THRESHOLD_METERS && (best === null || distanceMeters < best.distanceMeters)) {
+    if (
+      distanceMeters <= NEARBY_THRESHOLD_METERS &&
+      (best === null || distanceMeters < best.distanceMeters)
+    ) {
       best = { distanceMeters, place };
     }
   }

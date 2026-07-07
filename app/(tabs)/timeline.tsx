@@ -12,7 +12,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { listPlaces } from '../../src/places/placeRepository';
-import { groupPlacesByMonth, groupPlacesByYear, PlaceSection } from '../../src/places/placeTimeline';
+import {
+  groupPlacesByMonth,
+  groupPlacesByYear,
+  PlaceSection,
+} from '../../src/places/placeTimeline';
 import { PlaceRecord } from '../../src/places/placeTypes';
 import { colors, fonts, spacing } from '../../src/shared/theme';
 

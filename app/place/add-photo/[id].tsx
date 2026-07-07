@@ -55,7 +55,9 @@ export default function AddPhotoScreen(): ReactElement {
       router.back();
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : 'An unknown error occurred while adding the photo.';
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while adding the photo.';
       Alert.alert('Could not add photo', message);
     } finally {
       isBusyRef.current = false;

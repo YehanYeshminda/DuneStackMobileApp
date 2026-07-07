@@ -113,7 +113,11 @@ export default function CollectionDetailScreen(): ReactElement {
         >
           <Ionicons color={colors.text} name="chevron-back" size={20} />
         </Pressable>
-        <Pressable accessibilityLabel="Delete collection" accessibilityRole="button" onPress={confirmDelete}>
+        <Pressable
+          accessibilityLabel="Delete collection"
+          accessibilityRole="button"
+          onPress={confirmDelete}
+        >
           <Ionicons color={colors.danger} name="trash-outline" size={20} />
         </Pressable>
       </View>
@@ -157,7 +161,10 @@ export default function CollectionDetailScreen(): ReactElement {
               <Text style={styles.pickerDone}>Done</Text>
             </Pressable>
           </View>
-          <ScrollView contentContainerStyle={styles.pickerContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.pickerContent}
+            showsVerticalScrollIndicator={false}
+          >
             {listPlaces('').map((place: PlaceRecord): ReactElement => {
               const isMember = memberIds.has(place.id);
 
@@ -169,7 +176,9 @@ export default function CollectionDetailScreen(): ReactElement {
                 >
                   <Image source={{ uri: place.photoUri }} style={styles.pickerThumb} />
                   <View style={styles.pickerBody}>
-                    <Text style={[styles.pickerCategory, { color: getCategoryColor(place.categoryId) }]}>
+                    <Text
+                      style={[styles.pickerCategory, { color: getCategoryColor(place.categoryId) }]}
+                    >
                       {getCategoryLabel(place.categoryId).toUpperCase()}
                     </Text>
                     <Text numberOfLines={1} style={styles.pickerName}>

@@ -89,10 +89,16 @@ export default function FeedScreen(): ReactElement {
             data={isSearching ? results : places}
             keyExtractor={(item: PlaceRecord): string => item.id}
             ListEmptyComponent={
-              <Text style={styles.empty}>{isSearching ? 'No matches.' : 'No places saved yet.'}</Text>
+              <Text style={styles.empty}>
+                {isSearching ? 'No matches.' : 'No places saved yet.'}
+              </Text>
             }
             renderItem={({ item }: { item: PlaceRecord }): ReactElement =>
-              isSearching ? <SearchResultRow place={item} query={query} /> : <JournalRow place={item} />
+              isSearching ? (
+                <SearchResultRow place={item} query={query} />
+              ) : (
+                <JournalRow place={item} />
+              )
             }
             showsVerticalScrollIndicator={false}
           />
@@ -124,7 +130,9 @@ const NearbyBanner = ({ match }: { readonly match: NearbyMatch }): ReactElement 
         <Ionicons color={colors.accent} name="location" size={16} />
       </View>
       <View style={styles.nearbyBody}>
-        <Text style={styles.nearbyEyebrow}>YOU&apos;RE NEARBY · {Math.round(match.distanceMeters)} M</Text>
+        <Text style={styles.nearbyEyebrow}>
+          YOU&apos;RE NEARBY · {Math.round(match.distanceMeters)} M
+        </Text>
         <Text numberOfLines={1} style={styles.nearbyTitle}>
           {match.place.title}
         </Text>
@@ -164,7 +172,10 @@ const JournalRow = ({ place }: { readonly place: PlaceRecord }): ReactElement =>
       <Image source={{ uri: place.photoUri }} style={styles.thumb} />
       <View style={styles.rowContent}>
         <View style={styles.rowTop}>
-          <Text numberOfLines={1} style={[styles.category, { color: getCategoryColor(place.categoryId) }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.category, { color: getCategoryColor(place.categoryId) }]}
+          >
             {getCategoryLabel(place.categoryId).toUpperCase()}
           </Text>
           {place.isFavorite ? <Ionicons color={colors.accent} name="heart" size={16} /> : null}
@@ -195,7 +206,10 @@ const SearchResultRow = ({
       <Pressable style={styles.row}>
         <Image source={{ uri: place.photoUri }} style={styles.thumb} />
         <View style={styles.rowContent}>
-          <Text numberOfLines={1} style={[styles.category, { color: getCategoryColor(place.categoryId) }]}>
+          <Text
+            numberOfLines={1}
+            style={[styles.category, { color: getCategoryColor(place.categoryId) }]}
+          >
             {getCategoryLabel(place.categoryId).toUpperCase()}
           </Text>
           <Text numberOfLines={1} style={styles.rowTitle}>
@@ -267,7 +281,9 @@ const excerpt = (text: string, term: string): string => {
 };
 
 const tagSnippet = (tags: string, term: string): string => {
-  const match = tags.split(/[\s,]+/).find((tag: string): boolean => tag.toLowerCase().includes(term));
+  const match = tags
+    .split(/[\s,]+/)
+    .find((tag: string): boolean => tag.toLowerCase().includes(term));
 
   return match === undefined ? tags : `#${match.replace(/^#/, '')}`;
 };

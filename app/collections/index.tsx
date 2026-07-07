@@ -13,7 +13,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { createCollection, listCollectionSummaries } from '../../src/collections/collectionRepository';
+import {
+  createCollection,
+  listCollectionSummaries,
+} from '../../src/collections/collectionRepository';
 import { CollectionSummary } from '../../src/collections/collectionTypes';
 import { colors, fonts, spacing } from '../../src/shared/theme';
 
@@ -65,9 +68,7 @@ export default function CollectionsScreen(): ReactElement {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {collections.length === 0 ? (
-          <Text style={styles.empty}>
-            No collections yet. Group places into a trip or a theme.
-          </Text>
+          <Text style={styles.empty}>No collections yet. Group places into a trip or a theme.</Text>
         ) : null}
         {collections.map((collection: CollectionSummary): ReactElement => (
           <Pressable
@@ -93,7 +94,12 @@ export default function CollectionsScreen(): ReactElement {
         ))}
       </ScrollView>
 
-      <Modal animationType="fade" onRequestClose={(): void => setIsCreating(false)} transparent visible={isCreating}>
+      <Modal
+        animationType="fade"
+        onRequestClose={(): void => setIsCreating(false)}
+        transparent
+        visible={isCreating}
+      >
         <Pressable onPress={(): void => setIsCreating(false)} style={styles.modalBackdrop}>
           <Pressable onPress={(): void => undefined} style={styles.modalCard}>
             <Text style={styles.modalTitle}>New collection</Text>

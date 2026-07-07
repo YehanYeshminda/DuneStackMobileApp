@@ -15,9 +15,24 @@ type HubRow = {
 };
 
 const ROWS: readonly HubRow[] = [
-  { href: '/collections', icon: 'albums-outline', subtitle: 'Group places into trips or themes', title: 'Collections' },
-  { href: '/gallery', icon: 'images-outline', subtitle: 'Every photo as a contact sheet', title: 'Gallery' },
-  { href: '/settings', icon: 'settings-outline', subtitle: 'Permissions, export, and backups', title: 'Settings' },
+  {
+    href: '/collections',
+    icon: 'albums-outline',
+    subtitle: 'Group places into trips or themes',
+    title: 'Collections',
+  },
+  {
+    href: '/gallery',
+    icon: 'images-outline',
+    subtitle: 'Every photo as a contact sheet',
+    title: 'Gallery',
+  },
+  {
+    href: '/settings',
+    icon: 'settings-outline',
+    subtitle: 'Permissions, export, and backups',
+    title: 'Settings',
+  },
 ];
 
 export default function YouScreen(): ReactElement {

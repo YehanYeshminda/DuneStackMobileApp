@@ -1,7 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { ReactElement, useCallback, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { exportPlacesToFile } from '../src/data/exportPlaces';
@@ -74,7 +83,10 @@ export default function SettingsScreen(): ReactElement {
       if (result.count === 0) {
         Alert.alert('Nothing to export', 'Save a place first, then export your data.');
       } else if (!result.shared) {
-        Alert.alert('Sharing unavailable', 'The file was created but sharing is not available here.');
+        Alert.alert(
+          'Sharing unavailable',
+          'The file was created but sharing is not available here.',
+        );
       }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Could not export your data.';
@@ -92,10 +104,14 @@ export default function SettingsScreen(): ReactElement {
   };
 
   const confirmErase = (): void => {
-    Alert.alert('Erase all places?', 'This permanently deletes every place and photo on this device.', [
-      { style: 'cancel', text: 'Cancel' },
-      { onPress: eraseAll, style: 'destructive', text: 'Erase all' },
-    ]);
+    Alert.alert(
+      'Erase all places?',
+      'This permanently deletes every place and photo on this device.',
+      [
+        { style: 'cancel', text: 'Cancel' },
+        { onPress: eraseAll, style: 'destructive', text: 'Erase all' },
+      ],
+    );
   };
 
   const eraseAll = async (): Promise<void> => {

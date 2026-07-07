@@ -128,7 +128,9 @@ export default function CaptureScreen(): ReactElement {
       }
 
       const message =
-        error instanceof Error ? error.message : 'An unknown error occurred while taking the photo.';
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while taking the photo.';
       Alert.alert('Could not take photo', message);
     } finally {
       isTakingPhotoRef.current = false;
@@ -179,7 +181,9 @@ export default function CaptureScreen(): ReactElement {
       router.replace(`/place/${savedPlace.id}`);
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : 'An unknown error occurred while saving the place.';
+        error instanceof Error
+          ? error.message
+          : 'An unknown error occurred while saving the place.';
       Alert.alert('Could not save place', message);
     } finally {
       setIsSaving(false);
@@ -211,7 +215,12 @@ export default function CaptureScreen(): ReactElement {
           >
             <Ionicons color="#FFFFFF" name="close" size={22} />
           </Pressable>
-          <LocationPill dark hasLocation={capturedLocation !== null} isLocating={isLocating} onRetry={fetchCurrentLocation} />
+          <LocationPill
+            dark
+            hasLocation={capturedLocation !== null}
+            isLocating={isLocating}
+            onRetry={fetchCurrentLocation}
+          />
         </View>
         <View style={[styles.cameraBottom, { paddingBottom: insets.bottom + spacing.lg }]}>
           <Pressable
@@ -264,7 +273,11 @@ export default function CaptureScreen(): ReactElement {
         </ScrollView>
 
         <View style={styles.pillRow}>
-          <LocationPill hasLocation={capturedLocation !== null} isLocating={isLocating} onRetry={fetchCurrentLocation} />
+          <LocationPill
+            hasLocation={capturedLocation !== null}
+            isLocating={isLocating}
+            onRetry={fetchCurrentLocation}
+          />
         </View>
 
         <Text style={styles.label}>TITLE</Text>
@@ -359,7 +372,12 @@ type LocationPillProps = {
   readonly onRetry: () => void;
 };
 
-const LocationPill = ({ dark, hasLocation, isLocating, onRetry }: LocationPillProps): ReactElement => {
+const LocationPill = ({
+  dark,
+  hasLocation,
+  isLocating,
+  onRetry,
+}: LocationPillProps): ReactElement => {
   const label = isLocating ? 'Locating…' : hasLocation ? 'Location added' : 'Add location';
   const tint = dark === true ? '#FFFFFF' : colors.accent;
 
@@ -369,7 +387,10 @@ const LocationPill = ({ dark, hasLocation, isLocating, onRetry }: LocationPillPr
       onPress={(): void => {
         void onRetry();
       }}
-      style={[styles.locationPill, dark === true ? styles.locationPillDark : styles.locationPillLight]}
+      style={[
+        styles.locationPill,
+        dark === true ? styles.locationPillDark : styles.locationPillLight,
+      ]}
     >
       {isLocating ? (
         <ActivityIndicator color={tint} size="small" />

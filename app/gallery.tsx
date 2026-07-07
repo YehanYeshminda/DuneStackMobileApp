@@ -42,7 +42,9 @@ export default function GalleryScreen(): ReactElement {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {places.length === 0 ? (
-          <Text style={styles.empty}>No photos saved yet. Capture a place to build your gallery.</Text>
+          <Text style={styles.empty}>
+            No photos saved yet. Capture a place to build your gallery.
+          </Text>
         ) : null}
         {sections.map((section: PlaceSection): ReactElement => (
           <View key={section.key}>

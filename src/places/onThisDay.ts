@@ -24,12 +24,10 @@ export const findOnThisDay = (
         date.getDate() === now.getDate() &&
         date.getFullYear() < now.getFullYear(),
     )
-    .map(
-      ({ date, place }: { date: Date; place: PlaceRecord }): OnThisDayMatch => ({
-        place,
-        yearsAgo: now.getFullYear() - date.getFullYear(),
-      }),
-    )
+    .map(({ date, place }: { date: Date; place: PlaceRecord }): OnThisDayMatch => ({
+      place,
+      yearsAgo: now.getFullYear() - date.getFullYear(),
+    }))
     .sort((a: OnThisDayMatch, b: OnThisDayMatch): number => a.yearsAgo - b.yearsAgo);
 
   return matches[0] ?? null;

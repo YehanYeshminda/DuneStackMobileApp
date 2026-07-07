@@ -94,7 +94,10 @@ export default function PlaceDetailScreen(): ReactElement {
 
     try {
       deletePlace(place.id);
-      const uris = photos.length > 0 ? photos.map((photo: PlacePhotoRecord): string => photo.uri) : [place.photoUri];
+      const uris =
+        photos.length > 0
+          ? photos.map((photo: PlacePhotoRecord): string => photo.uri)
+          : [place.photoUri];
       for (const uri of uris) {
         await deleteLocalImage(uri);
       }
@@ -172,7 +175,11 @@ export default function PlaceDetailScreen(): ReactElement {
           style={{ width: pageWidth }}
         >
           {displayPhotos.map((photo: PlacePhotoRecord): ReactElement => (
-            <Image key={photo.id} source={{ uri: photo.uri }} style={[styles.photo, { width: pageWidth }]} />
+            <Image
+              key={photo.id}
+              source={{ uri: photo.uri }}
+              style={[styles.photo, { width: pageWidth }]}
+            />
           ))}
         </ScrollView>
 

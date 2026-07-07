@@ -1,7 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { lazy, ReactElement, Suspense, useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getCategoryColor, getCategoryLabel } from '../../src/categories/categories';
@@ -43,9 +51,7 @@ export default function ExploreScreen(): ReactElement {
   const mapAvailable = mapsSupported && isOnline;
 
   if (!mapAvailable && !viewAsList) {
-    return (
-      <OfflineState onViewList={(): void => setViewAsList(true)} supported={mapsSupported} />
-    );
+    return <OfflineState onViewList={(): void => setViewAsList(true)} supported={mapsSupported} />;
   }
 
   if (!mapAvailable) {
@@ -157,7 +163,11 @@ type OfflineStateProps = {
 const OfflineState = ({ onViewList, supported }: OfflineStateProps): ReactElement => (
   <View style={styles.offlineScreen}>
     <View style={styles.offlineIcon}>
-      <Ionicons color={colors.muted} name={supported ? 'cloud-offline-outline' : 'map-outline'} size={30} />
+      <Ionicons
+        color={colors.muted}
+        name={supported ? 'cloud-offline-outline' : 'map-outline'}
+        size={30}
+      />
     </View>
     <Text style={styles.offlineTitle}>
       {supported ? 'Map needs a connection' : "Map isn't available here"}
