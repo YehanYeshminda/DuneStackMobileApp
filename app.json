@@ -34,7 +34,15 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
-      "expo-maps"
+      "expo-maps",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#B4744A",
+          "resizeMode": "contain",
+          "imageWidth": 200
+        }
+      ]
     ],
     "scheme": "dunestack-places"
   }
