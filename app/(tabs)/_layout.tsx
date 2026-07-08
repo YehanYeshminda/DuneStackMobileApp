@@ -2,8 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, Tabs } from 'expo-router';
 import { ReactElement } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '../../src/shared/theme';
+
+const TAB_BAR_CONTENT_HEIGHT = 64;
+const TAB_BAR_VERTICAL_PADDING = 8;
 
 type TabIconProps = {
   readonly color: string;
@@ -11,6 +15,8 @@ type TabIconProps = {
 };
 
 export default function TabsLayout(): ReactElement {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -18,7 +24,13 @@ export default function TabsLayout(): ReactElement {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.muted,
         tabBarLabelStyle: styles.label,
-        tabBarStyle: styles.bar,
+        tabBarStyle: [
+          styles.bar,
+          {
+            height: TAB_BAR_CONTENT_HEIGHT + insets.bottom,
+            paddingBottom: TAB_BAR_VERTICAL_PADDING + insets.bottom,
+          },
+        ],
       }}
     >
       <Tabs.Screen
@@ -98,9 +110,8 @@ const styles = StyleSheet.create({
   bar: {
     backgroundColor: colors.surface,
     borderTopColor: colors.border,
-    height: 64,
-    paddingBottom: 8,
-    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingTop: TAB_BAR_VERTICAL_PADDING,
   },
   label: {
     fontSize: 11,
