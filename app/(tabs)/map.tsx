@@ -56,7 +56,10 @@ export default function ExploreScreen(): ReactElement {
 
   if (!mapAvailable) {
     return (
-      <View style={styles.screen}>
+      <View style={[styles.listScreen, { paddingTop: insets.top + spacing.sm }]}>
+        <Text style={styles.listScreenTitle}>
+          {located.length} {located.length === 1 ? 'place' : 'places'}
+        </Text>
         <PlaceList bottomInset={insets.bottom} onOpen={openPlace} places={located} />
       </View>
     );
@@ -232,6 +235,19 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: spacing.lg,
+  },
+  listScreen: {
+    backgroundColor: colors.background,
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+  },
+  listScreenTitle: {
+    color: colors.text,
+    fontFamily: fonts.serif,
+    fontSize: 26,
+    fontStyle: 'italic',
+    fontWeight: '700',
+    marginBottom: spacing.sm,
   },
   listEmpty: {
     color: colors.muted,
