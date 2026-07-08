@@ -28,6 +28,7 @@ export default function RootLayout(): ReactElement {
       <Stack
         screenOptions={{
           contentStyle: { backgroundColor: colors.background },
+          headerBackButtonDisplayMode: 'minimal',
           headerShadowVisible: false,
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
